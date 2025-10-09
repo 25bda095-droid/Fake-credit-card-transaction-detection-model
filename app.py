@@ -8,9 +8,10 @@ import io
 import os
 
 # ---- LOAD MODELS AND SCALER ----
-MODELPATH = r'C:\fraud detection trained models all files\detectionmodeltuned.pkl'
-SCALERPATH = r'C:\fraud detection trained models all files\scaler.pkl'
-RANDOMFORESTPATH = r'C:\fraud detection trained models all files\Forestmodel.pkl'
+MODELPATH = 'fraud_detection_model_tuned.pkl'
+SCALERPATH = 'scaler.pkl'
+RANDOMFORESTPATH = 'random_Forest_model.pkl'
+
 
 @st.cache_resource
 def load_models():
