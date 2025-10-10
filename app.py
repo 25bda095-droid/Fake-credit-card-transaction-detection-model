@@ -8,14 +8,13 @@ import io
 import os
 from PIL import Image
 
-
 # ---- LOAD MODELS AND SCALER ----
 MODELPATH = 'fraud_detection_model_tuned.pkl'
 SCALERPATH = 'scaler.pkl'
 RANDOMFORESTPATH = 'random_Forest_model.pkl'
-
-
-
+XGBOOSTPATH = 'XGBoost_model.joblib'
+DECISIONTREEPATH = 'DecisionTree_model.joblib'
+LOGREGPATH = 'LogisticRegression_model.joblib'
 
 @st.cache_resource
 def load_models():
@@ -23,12 +22,15 @@ def load_models():
         tunedmodel = joblib.load(MODELPATH)
         scaler = joblib.load(SCALERPATH)
         rfmodel = joblib.load(RANDOMFORESTPATH)
-        return tunedmodel, scaler, rfmodel
+        xgbmodel = joblib.load(XGBOOSTPATH)
+        dtmodel = joblib.load(DECISIONTREEPATH)
+        logregmodel = joblib.load(LOGREGPATH)
+        return tunedmodel, scaler, rfmodel, xgbmodel, dtmodel, logregmodel
     except Exception as e:
         st.error(f"Error loading models: {e}")
-        return None, None, None
+        return None, None, None, None, None, None
 
-tunedmodel, scaler, rfmodel = load_models()
+tunedmodel, scaler, rfmodel, xgbmodel, dtmodel, logregmodel = load_models()
 
 ALLOWED_EXTENSIONS = ['csv', 'pdf']
 
@@ -80,16 +82,25 @@ def preprocess_data(df):
 
 def predict_fraud(X_scaled, model_choice):
     try:
-        model = tunedmodel if model_choice == "tuned" else rfmodel
+        if model_choice == "tuned":
+            model = tunedmodel
+        elif model_choice == "rf":
+            model = rfmodel
+        elif model_choice == "xgb":
+            model = xgbmodel
+        elif model_choice == "dt":
+            model = dtmodel
+        elif model_choice == "logreg":
+            model = logregmodel
+        else:
+            st.error("Unknown model selected.")
+            return None, None
         predictions = model.predict(X_scaled)
         probabilities = model.predict_proba(X_scaled)[:, 1]
         return predictions, probabilities
     except Exception as e:
         st.error(f"Prediction error: {e}")
         return None, None
-
-
-
 
 # ---- STREAMLIT APP UI ----
 
@@ -117,7 +128,13 @@ st.markdown("""
 uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
 model_choice = st.radio(
     "Select Model",
-    [("Tuned Model", "tuned"), ("Random Forest Model", "rf")],
+    [
+        ("Tuned Model", "tuned"),
+        ("Random Forest Model", "rf"),
+        ("XGBoost Model", "xgb"),
+        ("Decision Tree Model", "dt"),
+        ("Logistic Regression Model", "logreg")
+    ],
     format_func=lambda x: x[0]
 )[1]
 analyze = st.button("Analyze Transactions")
@@ -160,7 +177,7 @@ if analyze and uploaded_file is not None:
                         import pandas as pd
                         # Pie chart for fraud vs legit
                         fig1, ax1 = plt.subplots(figsize=(3,3))
-                        ax1.pie([fraud_count, legitimate_count], labels=['Fraudulent', 'Legitimate'], autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, textprops={'color':'#232946','fontsize':12})
+                        ax1.pie([fraud_count, legitimate_count], labels=['Fraudulent', 'Legitimate'], autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, textprops={'color':'#232946','fontweight':'bold'})
                         ax1.set_title('Fraud vs Legitimate', fontsize=14, color='#232946')
                         st.pyplot(fig1)
 
