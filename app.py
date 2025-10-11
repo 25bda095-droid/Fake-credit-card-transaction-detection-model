@@ -371,27 +371,12 @@
 # ---- STREAMLIT APP UI ----
 
 # ---- STREAMLIT APP UI ----
+# ---- STREAMLIT APP UI ----
 
-st.markdown("""
-<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:2em;'>
-  <img src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png' width='90' style='margin-bottom:1em;border-radius:50%;box-shadow:0 2px 12px #ffb80055;'>
-  <h1 style='margin-bottom:0.2em;font-size:2.8rem;font-weight:800;letter-spacing:1px;'>Fraud Detection System</h1>
-  <h4 style='color:#ffb800;font-size:1.3rem;font-weight:600;margin-bottom:1.2em;'>CREDIT CARD TRANSACTION ANALYSIS</h4>
-</div>
-""", unsafe_allow_html=True)
+st.title("🚨 Fraud Detection System")
+st.markdown("### 💳 CREDIT CARD TRANSACTION ANALYSIS", help="Analyze transactions using 3 ML models")
 
-st.markdown("""
-<div style='background:#232946;border-radius:18px;padding:22px 32px;margin-bottom:22px;color:#f4f4f4;box-shadow:0 4px 24px rgba(0,0,0,0.13);max-width:600px;margin-left:auto;margin-right:auto;'>
-<b style='font-size:1.1em;color:#ffb800;'>How to Use:</b><br><br>
-<ul style='font-size:1.08em;line-height:1.7;'>
-<li>Upload your credit card transaction data (<b>CSV</b> or <b>PDF</b>).</li>
-<li>File must have columns: <b>Time, V1-V28, Amount</b>.</li>
-<li>Click <b>Check Transaction</b> to analyze with all 3 models.</li>
-<li>Get instant fraud detection results with model comparison!</li>
-</ul>
-<span style='color:#ff4b4b;'>Your data is processed securely and never stored.</span>
-</div>
-""", unsafe_allow_html=True)
+st.info("📋 **How to Use:**\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
 
 uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
 check = st.button("🔍 Check Transaction", use_container_width=True)
@@ -424,7 +409,7 @@ if check and uploaded_file is not None:
                         total_transactions = len(pred_tuned)
                         
                         # Overall Summary
-                        st.markdown("<div style='font-weight:700;font-size:1.5rem;margin-top:20px;margin-bottom:16px;color:#232946;'>📊 Overall Summary</div>", unsafe_allow_html=True)
+                        st.subheader("📊 Overall Summary")
                         col1, col2, col3, col4 = st.columns(4)
                         
                         with col1:
@@ -445,7 +430,7 @@ if check and uploaded_file is not None:
                         st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
                         
                         # Model Comparison Table
-                        st.markdown("<div style='font-weight:700;font-size:1.4rem;margin-bottom:16px;color:#232946;'>🔄 Model Comparison</div>", unsafe_allow_html=True)
+                        st.subheader("🔄 Model Comparison")
                         
                         comparison_data = {
                             'Model': ['🚨 Tuned Model', '🌳 Random Forest', '⚡ XGBoost'],
