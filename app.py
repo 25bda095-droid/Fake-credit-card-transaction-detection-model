@@ -373,8 +373,94 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
+import PyPDF2
+import re
 
-# Assuming load_models(), extract_csv_from_pdf(), preprocess_data(), predict_fraud() are already defined
+# Define allowed extensions
+ALLOWED_EXTENSIONS = ['csv', 'pdf']
+MODELPATH = 'fraud_detection_model_tuned.pkl'
+SCALERPATH = 'scaler.pkl'
+RANDOMFORESTPATH = 'random_Forest_model.pkl'
+XGBOOSTPATH = 'XGBoost_model.joblib'
+
+@st.cache_resource
+def load_models():
+    try:
+        tunedmodel = joblib.load(MODELPATH)
+        scaler = joblib.load(SCALERPATH)
+        rfmodel = joblib.load(RANDOMFORESTPATH)
+        xgbmodel = joblib.load(XGBOOSTPATH)
+        return tunedmodel, scaler, rfmodel, xgbmodel
+    except Exception as e:
+        st.error(f"Error loading models: {e}")
+        return None, None, None, None
+
+tunedmodel, scaler, rfmodel, xgbmodel = load_models()
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def extract_csv_from_pdf(pdf_file):
+    try:
+        pdfreader = PyPDF2.PdfReader(pdf_file)
+        text = ''
+        for page in pdfreader.pages:
+            text += page.extract_text()
+        lines = text.strip().split('\n')
+        data = []
+        for line in lines:
+            row = re.split(r',\s*', line.strip())
+            if len(row) > 1:
+                data.append(row)
+        if data:
+            df = pd.DataFrame(data[1:], columns=data[0])
+            return df
+        else:
+            return None
+    except Exception as e:
+        st.error(f"PDF extraction error: {e}")
+        return None
+
+def preprocess_data(df):
+    try:
+        required_cols = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            if 'Time' in missing_cols:
+                required_cols = [f'V{i}' for i in range(1, 29)] + ['Amount']
+                missing_cols = [col for col in required_cols if col not in df.columns]
+            if missing_cols:
+                return None, f"Missing required columns: {', '.join(missing_cols)}"
+        for col in required_cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        df = df.dropna(subset=required_cols)
+        if len(df) == 0:
+            return None, "No valid data found after cleaning."
+        feature_cols = required_cols
+        X = df[feature_cols].copy()
+        X_scaled = scaler.transform(X)
+        return X_scaled, None
+    except Exception as e:
+        return None, f"Preprocessing error: {str(e)}"
+
+def predict_fraud(X_scaled, model_choice):
+    try:
+        if model_choice == "tuned":
+            model = tunedmodel
+        elif model_choice == "rf":
+            model = rfmodel
+        elif model_choice == "xgb":
+            model = xgbmodel
+        else:
+            st.error("Unknown model selected.")
+            return None, None
+        predictions = model.predict(X_scaled)
+        probabilities = model.predict_proba(X_scaled)[:, 1]
+        return predictions, probabilities
+    except Exception as e:
+        st.error(f"Prediction error: {e}")
+        return None, None
 
 st.set_page_config(page_title="Fraud Detection", layout="wide")
 
