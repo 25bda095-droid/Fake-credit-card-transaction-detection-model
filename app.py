@@ -370,6 +370,8 @@
 
 # ---- STREAMLIT APP UI ----
 
+# ---- STREAMLIT APP UI ----
+
 st.markdown("""
 <div style='display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:2em;'>
   <img src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png' width='90' style='margin-bottom:1em;border-radius:50%;box-shadow:0 2px 12px #ffb80055;'>
@@ -602,8 +604,6 @@ if check and uploaded_file is not None:
                         
                         with summary_col3:
                             st.metric("🟡 Low Risk (1/3)", len(fraud_1_model), delta=None)
-                        
-                        st.markdown('</div>', unsafe_allow_html=True)
                         
         except Exception as e:
             st.error(f"Processing error: {str(e)}")
