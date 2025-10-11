@@ -373,13 +373,15 @@
 # ---- STREAMLIT APP UI ----
 # ---- STREAMLIT APP UI ----
 
-st.title("🚨 Fraud Detection System")
-st.markdown("### 💳 CREDIT CARD TRANSACTION ANALYSIS", help="Analyze transactions using 3 ML models")
+# ---- STREAMLIT APP UI ----
 
-st.info("📋 **How to Use:**\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
+st.title("Fraud Detection System")
+st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
+
+st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
 
 uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
-check = st.button("🔍 Check Transaction", use_container_width=True)
+check = st.button("Check Transaction", use_container_width=True)
 
 if check and uploaded_file is not None:
     filename = uploaded_file.name
@@ -409,23 +411,23 @@ if check and uploaded_file is not None:
                         total_transactions = len(pred_tuned)
                         
                         # Overall Summary
-                        st.subheader("📊 Overall Summary")
+                        st.subheader("Overall Summary")
                         col1, col2, col3, col4 = st.columns(4)
                         
                         with col1:
-                            st.metric("📈 Total Transactions", total_transactions, delta=None)
+                            st.metric("Total Transactions", total_transactions, delta=None)
                         
                         with col2:
                             tuned_fraud = int(np.sum(pred_tuned))
-                            st.metric("🚨 Tuned Model Fraud", tuned_fraud)
+                            st.metric("Tuned Model Fraud", tuned_fraud)
                         
                         with col3:
                             rf_fraud = int(np.sum(pred_rf))
-                            st.metric("🌳 RF Model Fraud", rf_fraud)
+                            st.metric("RF Model Fraud", rf_fraud)
                         
                         with col4:
                             xgb_fraud = int(np.sum(pred_xgb))
-                            st.metric("⚡ XGB Model Fraud", xgb_fraud)
+                            st.metric("XGB Model Fraud", xgb_fraud)
                         
                         st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
                         
