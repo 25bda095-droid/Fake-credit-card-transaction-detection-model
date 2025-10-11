@@ -368,6 +368,307 @@
 #             st.error(f"Processing error: {str(e)}")
 #     st.markdown('</div>', unsafe_allow_html=True)
 
+# import streamlit as st
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# import joblib
+# import PyPDF2
+# import re
+
+# # Define allowed extensions
+# ALLOWED_EXTENSIONS = ['csv', 'pdf']
+# MODELPATH = 'fraud_detection_model_tuned.pkl'
+# SCALERPATH = 'scaler.pkl'
+# RANDOMFORESTPATH = 'random_Forest_model.pkl'
+# XGBOOSTPATH = 'XGBoost_model.joblib'
+
+# @st.cache_resource
+# def load_models():
+#     try:
+#         tunedmodel = joblib.load(MODELPATH)
+#         scaler = joblib.load(SCALERPATH)
+#         rfmodel = joblib.load(RANDOMFORESTPATH)
+#         xgbmodel = joblib.load(XGBOOSTPATH)
+#         return tunedmodel, scaler, rfmodel, xgbmodel
+#     except Exception as e:
+#         st.error(f"Error loading models: {e}")
+#         return None, None, None, None
+
+# tunedmodel, scaler, rfmodel, xgbmodel = load_models()
+
+# def allowed_file(filename):
+#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# def extract_csv_from_pdf(pdf_file):
+#     try:
+#         pdfreader = PyPDF2.PdfReader(pdf_file)
+#         text = ''
+#         for page in pdfreader.pages:
+#             text += page.extract_text()
+#         lines = text.strip().split('\n')
+#         data = []
+#         for line in lines:
+#             row = re.split(r',\s*', line.strip())
+#             if len(row) > 1:
+#                 data.append(row)
+#         if data:
+#             df = pd.DataFrame(data[1:], columns=data[0])
+#             return df
+#         else:
+#             return None
+#     except Exception as e:
+#         st.error(f"PDF extraction error: {e}")
+#         return None
+
+# def preprocess_data(df):
+#     try:
+#         required_cols = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+#         missing_cols = [col for col in required_cols if col not in df.columns]
+#         if missing_cols:
+#             if 'Time' in missing_cols:
+#                 required_cols = [f'V{i}' for i in range(1, 29)] + ['Amount']
+#                 missing_cols = [col for col in required_cols if col not in df.columns]
+#             if missing_cols:
+#                 return None, f"Missing required columns: {', '.join(missing_cols)}"
+#         for col in required_cols:
+#             df[col] = pd.to_numeric(df[col], errors='coerce')
+#         df = df.dropna(subset=required_cols)
+#         if len(df) == 0:
+#             return None, "No valid data found after cleaning."
+#         feature_cols = required_cols
+#         X = df[feature_cols].copy()
+#         X_scaled = scaler.transform(X)
+#         return X_scaled, None
+#     except Exception as e:
+#         return None, f"Preprocessing error: {str(e)}"
+
+# def predict_fraud(X_scaled, model_choice):
+#     try:
+#         if model_choice == "tuned":
+#             model = tunedmodel
+#         elif model_choice == "rf":
+#             model = rfmodel
+#         elif model_choice == "xgb":
+#             model = xgbmodel
+#         else:
+#             st.error("Unknown model selected.")
+#             return None, None
+#         predictions = model.predict(X_scaled)
+#         probabilities = model.predict_proba(X_scaled)[:, 1]
+#         return predictions, probabilities
+#     except Exception as e:
+#         st.error(f"Prediction error: {e}")
+#         return None, None
+
+# st.set_page_config(page_title="Fraud Detection", layout="wide")
+
+# st.title("Fraud Detection System")
+# st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
+
+# st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
+
+# uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
+# check = st.button("Check Transaction", use_container_width=True)
+
+# if check and uploaded_file is not None:
+#     filename = uploaded_file.name
+#     if not allowed_file(filename):
+#         st.error("Invalid file format. Please upload a CSV or PDF.")
+#     else:
+#         try:
+#             if filename.endswith('.csv'):
+#                 df = pd.read_csv(uploaded_file)
+#             else:
+#                 df = extract_csv_from_pdf(uploaded_file)
+#             if df is None:
+#                 st.error("Could not extract data from the uploaded file.")
+#             else:
+#                 X_scaled, error = preprocess_data(df)
+#                 if error:
+#                     st.error(error)
+#                 else:
+#                     pred_tuned, prob_tuned = predict_fraud(X_scaled, "tuned")
+#                     pred_rf, prob_rf = predict_fraud(X_scaled, "rf")
+#                     pred_xgb, prob_xgb = predict_fraud(X_scaled, "xgb")
+                    
+#                     if pred_tuned is None or pred_rf is None or pred_xgb is None:
+#                         st.error("Prediction failed.")
+#                     else:
+#                         total_transactions = len(pred_tuned)
+                        
+#                         st.subheader("Overall Summary")
+#                         col1, col2, col3, col4 = st.columns(4)
+                        
+#                         with col1:
+#                             st.metric("Total Transactions", total_transactions)
+                        
+#                         with col2:
+#                             st.metric("Tuned Model Fraud", int(np.sum(pred_tuned)))
+                        
+#                         with col3:
+#                             st.metric("RF Model Fraud", int(np.sum(pred_rf)))
+                        
+#                         with col4:
+#                             st.metric("XGB Model Fraud", int(np.sum(pred_xgb)))
+                        
+#                         st.divider()
+                        
+#                         st.subheader("Model Comparison")
+#                         comparison_data = {
+#                             'Model': ['Tuned Model', 'Random Forest', 'XGBoost'],
+#                             'Fraudulent': [
+#                                 int(np.sum(pred_tuned)),
+#                                 int(np.sum(pred_rf)),
+#                                 int(np.sum(pred_xgb))
+#                             ],
+#                             'Legitimate': [
+#                                 total_transactions - int(np.sum(pred_tuned)),
+#                                 total_transactions - int(np.sum(pred_rf)),
+#                                 total_transactions - int(np.sum(pred_xgb))
+#                             ],
+#                             'Fraud %': [
+#                                 f"{(int(np.sum(pred_tuned)) / total_transactions) * 100:.2f}%",
+#                                 f"{(int(np.sum(pred_rf)) / total_transactions) * 100:.2f}%",
+#                                 f"{(int(np.sum(pred_xgb)) / total_transactions) * 100:.2f}%"
+#                             ],
+#                             'Avg Probability': [
+#                                 f"{np.mean(prob_tuned):.4f}",
+#                                 f"{np.mean(prob_rf):.4f}",
+#                                 f"{np.mean(prob_xgb):.4f}"
+#                             ]
+#                         }
+                        
+#                         comparison_df = pd.DataFrame(comparison_data)
+#                         st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+                        
+#                         st.divider()
+                        
+#                         st.subheader("Visualizations")
+#                         col1, col2 = st.columns(2)
+                        
+#                         with col1:
+#                             fig1, axes = plt.subplots(1, 3, figsize=(16, 5))
+#                             fig1.patch.set_facecolor('white')
+                            
+#                             models_data = [
+#                                 ('Tuned Model', int(np.sum(pred_tuned)), total_transactions - int(np.sum(pred_tuned))),
+#                                 ('Random Forest', int(np.sum(pred_rf)), total_transactions - int(np.sum(pred_rf))),
+#                                 ('XGBoost', int(np.sum(pred_xgb)), total_transactions - int(np.sum(pred_xgb)))
+#                             ]
+                            
+#                             for idx, (model_name, fraud_count, legit_count) in enumerate(models_data):
+#                                 axes[idx].pie([fraud_count, legit_count], labels=['Fraudulent', 'Legitimate'], 
+#                                              autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, 
+#                                              textprops={'color':'#232946','fontweight':'bold'})
+#                                 axes[idx].set_title(model_name, fontsize=12, fontweight='bold')
+                            
+#                             plt.tight_layout()
+#                             st.pyplot(fig1)
+                        
+#                         with col2:
+#                             fig2, ax2 = plt.subplots(figsize=(11, 5))
+#                             fig2.patch.set_facecolor('white')
+                            
+#                             ax2.hist(prob_tuned, bins=25, alpha=0.6, label='Tuned Model', color='#fc5c7d', edgecolor='black')
+#                             ax2.hist(prob_rf, bins=25, alpha=0.6, label='Random Forest', color='#6a82fb', edgecolor='black')
+#                             ax2.hist(prob_xgb, bins=25, alpha=0.6, label='XGBoost', color='#ffb800', edgecolor='black')
+                            
+#                             ax2.set_xlabel('Fraud Probability', fontsize=11, fontweight='bold')
+#                             ax2.set_ylabel('Count', fontsize=11, fontweight='bold')
+#                             ax2.set_title('Probability Distribution - Model Comparison', fontsize=12, fontweight='bold')
+#                             ax2.legend(fontsize=10)
+#                             ax2.grid(True, alpha=0.3)
+                            
+#                             st.pyplot(fig2)
+                        
+#                         st.divider()
+                        
+#                         models_count = (pred_tuned.astype(int) + pred_rf.astype(int) + pred_xgb.astype(int))
+#                         avg_prob = (prob_tuned + prob_rf + prob_xgb) / 3
+                        
+#                         fraud_3_models = np.where(models_count == 3)[0]
+#                         fraud_2_models = np.where(models_count == 2)[0]
+#                         fraud_1_model = np.where(models_count == 1)[0]
+                        
+#                         st.subheader("100% FRAUD - Detected by All 3 Models")
+#                         if len(fraud_3_models) > 0:
+#                             fraud_3_df = df.iloc[fraud_3_models].copy()
+#                             fraud_3_df['Tuned Prob'] = prob_tuned[fraud_3_models]
+#                             fraud_3_df['RF Prob'] = prob_rf[fraud_3_models]
+#                             fraud_3_df['XGB Prob'] = prob_xgb[fraud_3_models]
+#                             fraud_3_df['Avg Probability'] = avg_prob[fraud_3_models]
+                            
+#                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability']
+#                             st.dataframe(fraud_3_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
+#                                         use_container_width=True, hide_index=True)
+#                             st.success(f"Found {len(fraud_3_models)} HIGH CONFIDENCE fraud transactions!")
+#                         else:
+#                             st.info("No transactions detected as fraud by all 3 models.")
+                        
+#                         st.divider()
+                        
+#                         st.subheader("MEDIUM RISK - Detected by 2 Models")
+#                         if len(fraud_2_models) > 0:
+#                             fraud_2_df = df.iloc[fraud_2_models].copy()
+#                             fraud_2_df['Tuned Prob'] = prob_tuned[fraud_2_models]
+#                             fraud_2_df['RF Prob'] = prob_rf[fraud_2_models]
+#                             fraud_2_df['XGB Prob'] = prob_xgb[fraud_2_models]
+#                             fraud_2_df['Avg Probability'] = avg_prob[fraud_2_models]
+#                             fraud_2_df['Models Flagged'] = models_count[fraud_2_models]
+                            
+#                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
+#                             st.dataframe(fraud_2_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
+#                                         use_container_width=True, hide_index=True)
+#                             st.warning(f"Found {len(fraud_2_models)} MEDIUM RISK fraud transactions!")
+#                         else:
+#                             st.info("No transactions detected as fraud by exactly 2 models.")
+                        
+#                         st.divider()
+                        
+#                         st.subheader("LOW RISK - Detected by 1 Model")
+#                         if len(fraud_1_model) > 0:
+#                             fraud_1_df = df.iloc[fraud_1_model].copy()
+#                             fraud_1_df['Tuned Prob'] = prob_tuned[fraud_1_model]
+#                             fraud_1_df['RF Prob'] = prob_rf[fraud_1_model]
+#                             fraud_1_df['XGB Prob'] = prob_xgb[fraud_1_model]
+#                             fraud_1_df['Avg Probability'] = avg_prob[fraud_1_model]
+#                             fraud_1_df['Models Flagged'] = models_count[fraud_1_model]
+                            
+#                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
+#                             st.dataframe(fraud_1_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
+#                                         use_container_width=True, hide_index=True)
+#                             st.info(f"Found {len(fraud_1_model)} LOW RISK fraud transactions!")
+#                         else:
+#                             st.info("No transactions detected as fraud by exactly 1 model.")
+                        
+#                         st.divider()
+                        
+#                         st.subheader("Risk Summary")
+#                         col1, col2, col3 = st.columns(3)
+                        
+#                         with col1:
+#                             st.metric("100% Fraud (3/3)", len(fraud_3_models))
+                        
+#                         with col2:
+#                             st.metric("Medium Risk (2/3)", len(fraud_2_models))
+                        
+#                         with col3:
+#                             st.metric("Low Risk (1/3)", len(fraud_1_model))
+                        
+#         except Exception as e:
+#             st.error(f"Processing error: {str(e)}")
+
+
+
+
+
+
+
+
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -377,7 +678,79 @@ import joblib
 import PyPDF2
 import re
 
-# Define allowed extensions
+# --- Loader Component ---
+def show_loader():
+    loader_html = """
+    <div class="svg-frame">
+      <svg width="344" height="344" viewBox="0 0 344 344">
+        <circle id="center" cx="172" cy="172" r="10" stroke="#FFF" stroke-width="2" />
+        <circle id="center1" cx="172" cy="172" r="20" />
+        <circle id="out2" cx="172" cy="172" r="60" stroke="#0FF" stroke-width="4" />
+        <circle id="out3" cx="172" cy="172" r="80" stroke="#0FF" stroke-width="4" />
+        <circle id="inner3" cx="172" cy="172" r="40" stroke="#0FF" stroke-width="4" />
+        <circle id="inner1" cx="172" cy="172" r="30" stroke="#0FF" stroke-width="4" />
+      </svg>
+    </div>
+    <style>
+    .svg-frame {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      transform-style: preserve-3d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .svg-frame svg {
+      position: absolute;
+      transition: .5s;
+      z-index: calc(1 - (0.2 * var(--j)));
+      transform-origin: center;
+      width: 344px;
+      height: 344px;
+      fill: none;
+    }
+    .svg-frame:hover svg {
+      transform: rotate(-80deg) skew(30deg)
+        translateX(calc(45px * var(--i)))
+        translateY(calc(-35px * var(--i)));
+    }
+    .svg-frame svg #center {
+      transition: .5s;
+      transform-origin: center;
+    }
+    .svg-frame:hover svg #center {
+      transform: rotate(-30deg) translateX(45px) translateY(-3px);
+    }
+    #out2 {
+      animation: rotate16 7s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
+    #out3 {
+      animation: rotate16 3s ease-in-out infinite alternate;
+      transform-origin: center;
+      stroke: #ff0;
+    }
+    #inner3,
+    #inner1 {
+      animation: rotate16 4s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
+    #center1 {
+      fill: #ff0;
+      animation: rotate16 2s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
+    @keyframes rotate16 {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    </style>
+    """
+    st.components.v1.html(loader_html, height=320)
+
+# --- Original Model/App Code ---
 ALLOWED_EXTENSIONS = ['csv', 'pdf']
 MODELPATH = 'fraud_detection_model_tuned.pkl'
 SCALERPATH = 'scaler.pkl'
@@ -386,6 +759,7 @@ XGBOOSTPATH = 'XGBoost_model.joblib'
 
 @st.cache_resource
 def load_models():
+    show_loader() # Show loader while loading models
     try:
         tunedmodel = joblib.load(MODELPATH)
         scaler = joblib.load(SCALERPATH)
@@ -466,7 +840,6 @@ st.set_page_config(page_title="Fraud Detection", layout="wide")
 
 st.title("Fraud Detection System")
 st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
-
 st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
 
 uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
@@ -478,6 +851,8 @@ if check and uploaded_file is not None:
         st.error("Invalid file format. Please upload a CSV or PDF.")
     else:
         try:
+            # You can show loader during heavy processing if you wish
+            # show_loader()
             if filename.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
@@ -542,56 +917,43 @@ if check and uploaded_file is not None:
                         
                         comparison_df = pd.DataFrame(comparison_data)
                         st.dataframe(comparison_df, use_container_width=True, hide_index=True)
-                        
                         st.divider()
                         
                         st.subheader("Visualizations")
                         col1, col2 = st.columns(2)
-                        
                         with col1:
                             fig1, axes = plt.subplots(1, 3, figsize=(16, 5))
                             fig1.patch.set_facecolor('white')
-                            
                             models_data = [
                                 ('Tuned Model', int(np.sum(pred_tuned)), total_transactions - int(np.sum(pred_tuned))),
                                 ('Random Forest', int(np.sum(pred_rf)), total_transactions - int(np.sum(pred_rf))),
                                 ('XGBoost', int(np.sum(pred_xgb)), total_transactions - int(np.sum(pred_xgb)))
                             ]
-                            
                             for idx, (model_name, fraud_count, legit_count) in enumerate(models_data):
                                 axes[idx].pie([fraud_count, legit_count], labels=['Fraudulent', 'Legitimate'], 
                                              autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, 
                                              textprops={'color':'#232946','fontweight':'bold'})
                                 axes[idx].set_title(model_name, fontsize=12, fontweight='bold')
-                            
                             plt.tight_layout()
                             st.pyplot(fig1)
-                        
                         with col2:
                             fig2, ax2 = plt.subplots(figsize=(11, 5))
                             fig2.patch.set_facecolor('white')
-                            
                             ax2.hist(prob_tuned, bins=25, alpha=0.6, label='Tuned Model', color='#fc5c7d', edgecolor='black')
                             ax2.hist(prob_rf, bins=25, alpha=0.6, label='Random Forest', color='#6a82fb', edgecolor='black')
                             ax2.hist(prob_xgb, bins=25, alpha=0.6, label='XGBoost', color='#ffb800', edgecolor='black')
-                            
                             ax2.set_xlabel('Fraud Probability', fontsize=11, fontweight='bold')
                             ax2.set_ylabel('Count', fontsize=11, fontweight='bold')
                             ax2.set_title('Probability Distribution - Model Comparison', fontsize=12, fontweight='bold')
                             ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
-                            
                             st.pyplot(fig2)
-                        
                         st.divider()
-                        
                         models_count = (pred_tuned.astype(int) + pred_rf.astype(int) + pred_xgb.astype(int))
                         avg_prob = (prob_tuned + prob_rf + prob_xgb) / 3
-                        
                         fraud_3_models = np.where(models_count == 3)[0]
                         fraud_2_models = np.where(models_count == 2)[0]
                         fraud_1_model = np.where(models_count == 1)[0]
-                        
                         st.subheader("100% FRAUD - Detected by All 3 Models")
                         if len(fraud_3_models) > 0:
                             fraud_3_df = df.iloc[fraud_3_models].copy()
@@ -599,16 +961,13 @@ if check and uploaded_file is not None:
                             fraud_3_df['RF Prob'] = prob_rf[fraud_3_models]
                             fraud_3_df['XGB Prob'] = prob_xgb[fraud_3_models]
                             fraud_3_df['Avg Probability'] = avg_prob[fraud_3_models]
-                            
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability']
                             st.dataframe(fraud_3_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
                             st.success(f"Found {len(fraud_3_models)} HIGH CONFIDENCE fraud transactions!")
                         else:
                             st.info("No transactions detected as fraud by all 3 models.")
-                        
                         st.divider()
-                        
                         st.subheader("MEDIUM RISK - Detected by 2 Models")
                         if len(fraud_2_models) > 0:
                             fraud_2_df = df.iloc[fraud_2_models].copy()
@@ -617,16 +976,13 @@ if check and uploaded_file is not None:
                             fraud_2_df['XGB Prob'] = prob_xgb[fraud_2_models]
                             fraud_2_df['Avg Probability'] = avg_prob[fraud_2_models]
                             fraud_2_df['Models Flagged'] = models_count[fraud_2_models]
-                            
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
                             st.dataframe(fraud_2_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
                             st.warning(f"Found {len(fraud_2_models)} MEDIUM RISK fraud transactions!")
                         else:
                             st.info("No transactions detected as fraud by exactly 2 models.")
-                        
                         st.divider()
-                        
                         st.subheader("LOW RISK - Detected by 1 Model")
                         if len(fraud_1_model) > 0:
                             fraud_1_df = df.iloc[fraud_1_model].copy()
@@ -635,27 +991,21 @@ if check and uploaded_file is not None:
                             fraud_1_df['XGB Prob'] = prob_xgb[fraud_1_model]
                             fraud_1_df['Avg Probability'] = avg_prob[fraud_1_model]
                             fraud_1_df['Models Flagged'] = models_count[fraud_1_model]
-                            
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
                             st.dataframe(fraud_1_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
                             st.info(f"Found {len(fraud_1_model)} LOW RISK fraud transactions!")
                         else:
                             st.info("No transactions detected as fraud by exactly 1 model.")
-                        
                         st.divider()
-                        
                         st.subheader("Risk Summary")
                         col1, col2, col3 = st.columns(3)
-                        
                         with col1:
                             st.metric("100% Fraud (3/3)", len(fraud_3_models))
-                        
                         with col2:
                             st.metric("Medium Risk (2/3)", len(fraud_2_models))
-                        
                         with col3:
                             st.metric("Low Risk (1/3)", len(fraud_1_model))
-                        
         except Exception as e:
             st.error(f"Processing error: {str(e)}")
+
