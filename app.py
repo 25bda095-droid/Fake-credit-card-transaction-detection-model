@@ -368,12 +368,15 @@
 #             st.error(f"Processing error: {str(e)}")
 #     st.markdown('</div>', unsafe_allow_html=True)
 
-# ---- STREAMLIT APP UI ----
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# ---- STREAMLIT APP UI ----
-# ---- STREAMLIT APP UI ----
+# Assuming load_models(), extract_csv_from_pdf(), preprocess_data(), predict_fraud() are already defined
 
-# ---- STREAMLIT APP UI ----
+st.set_page_config(page_title="Fraud Detection", layout="wide")
 
 st.title("Fraud Detection System")
 st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
@@ -400,7 +403,6 @@ if check and uploaded_file is not None:
                 if error:
                     st.error(error)
                 else:
-                    # Get predictions from all three models
                     pred_tuned, prob_tuned = predict_fraud(X_scaled, "tuned")
                     pred_rf, prob_rf = predict_fraud(X_scaled, "rf")
                     pred_xgb, prob_xgb = predict_fraud(X_scaled, "xgb")
@@ -410,32 +412,26 @@ if check and uploaded_file is not None:
                     else:
                         total_transactions = len(pred_tuned)
                         
-                        # Overall Summary
                         st.subheader("Overall Summary")
                         col1, col2, col3, col4 = st.columns(4)
                         
                         with col1:
-                            st.metric("Total Transactions", total_transactions, delta=None)
+                            st.metric("Total Transactions", total_transactions)
                         
                         with col2:
-                            tuned_fraud = int(np.sum(pred_tuned))
-                            st.metric("Tuned Model Fraud", tuned_fraud)
+                            st.metric("Tuned Model Fraud", int(np.sum(pred_tuned)))
                         
                         with col3:
-                            rf_fraud = int(np.sum(pred_rf))
-                            st.metric("RF Model Fraud", rf_fraud)
+                            st.metric("RF Model Fraud", int(np.sum(pred_rf)))
                         
                         with col4:
-                            xgb_fraud = int(np.sum(pred_xgb))
-                            st.metric("XGB Model Fraud", xgb_fraud)
+                            st.metric("XGB Model Fraud", int(np.sum(pred_xgb)))
                         
-                        st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # Model Comparison Table
-                        st.subheader("🔄 Model Comparison")
-                        
+                        st.subheader("Model Comparison")
                         comparison_data = {
-                            'Model': ['🚨 Tuned Model', '🌳 Random Forest', '⚡ XGBoost'],
+                            'Model': ['Tuned Model', 'Random Forest', 'XGBoost'],
                             'Fraudulent': [
                                 int(np.sum(pred_tuned)),
                                 int(np.sum(pred_rf)),
@@ -461,57 +457,48 @@ if check and uploaded_file is not None:
                         comparison_df = pd.DataFrame(comparison_data)
                         st.dataframe(comparison_df, use_container_width=True, hide_index=True)
                         
-                        st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # Charts Section
-                        st.markdown("<div style='font-weight:700;font-size:1.4rem;margin-bottom:16px;color:#232946;'>📈 Visualizations</div>", unsafe_allow_html=True)
-                        
-                        import matplotlib.pyplot as plt
-                        import seaborn as sns
-                        
+                        st.subheader("Visualizations")
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            # Pie charts for each model
                             fig1, axes = plt.subplots(1, 3, figsize=(16, 5))
-                            fig1.patch.set_facecolor('#f8f9fa')
+                            fig1.patch.set_facecolor('white')
                             
                             models_data = [
-                                ('🚨 Tuned Model', int(np.sum(pred_tuned)), total_transactions - int(np.sum(pred_tuned))),
-                                ('🌳 Random Forest', int(np.sum(pred_rf)), total_transactions - int(np.sum(pred_rf))),
-                                ('⚡ XGBoost', int(np.sum(pred_xgb)), total_transactions - int(np.sum(pred_xgb)))
+                                ('Tuned Model', int(np.sum(pred_tuned)), total_transactions - int(np.sum(pred_tuned))),
+                                ('Random Forest', int(np.sum(pred_rf)), total_transactions - int(np.sum(pred_rf))),
+                                ('XGBoost', int(np.sum(pred_xgb)), total_transactions - int(np.sum(pred_xgb)))
                             ]
                             
                             for idx, (model_name, fraud_count, legit_count) in enumerate(models_data):
                                 axes[idx].pie([fraud_count, legit_count], labels=['Fraudulent', 'Legitimate'], 
                                              autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, 
-                                             textprops={'color':'#232946','fontweight':'bold', 'fontsize': 11})
-                                axes[idx].set_title(model_name, fontsize=13, color='#232946', fontweight='bold', pad=15)
+                                             textprops={'color':'#232946','fontweight':'bold'})
+                                axes[idx].set_title(model_name, fontsize=12, fontweight='bold')
                             
                             plt.tight_layout()
                             st.pyplot(fig1)
                         
                         with col2:
-                            # Probability distribution comparison
                             fig2, ax2 = plt.subplots(figsize=(11, 5))
-                            fig2.patch.set_facecolor('#f8f9fa')
+                            fig2.patch.set_facecolor('white')
                             
-                            ax2.hist(prob_tuned, bins=25, alpha=0.6, label='🚨 Tuned Model', color='#fc5c7d', edgecolor='black', linewidth=1.2)
-                            ax2.hist(prob_rf, bins=25, alpha=0.6, label='🌳 Random Forest', color='#6a82fb', edgecolor='black', linewidth=1.2)
-                            ax2.hist(prob_xgb, bins=25, alpha=0.6, label='⚡ XGBoost', color='#ffb800', edgecolor='black', linewidth=1.2)
+                            ax2.hist(prob_tuned, bins=25, alpha=0.6, label='Tuned Model', color='#fc5c7d', edgecolor='black')
+                            ax2.hist(prob_rf, bins=25, alpha=0.6, label='Random Forest', color='#6a82fb', edgecolor='black')
+                            ax2.hist(prob_xgb, bins=25, alpha=0.6, label='XGBoost', color='#ffb800', edgecolor='black')
                             
-                            ax2.set_xlabel('Fraud Probability', fontsize=12, fontweight='bold')
-                            ax2.set_ylabel('Count', fontsize=12, fontweight='bold')
-                            ax2.set_title('Probability Distribution - Model Comparison', fontsize=13, color='#232946', fontweight='bold', pad=15)
-                            ax2.legend(fontsize=11, loc='upper right')
-                            ax2.grid(True, alpha=0.3, linestyle='--')
-                            ax2.set_axisbelow(True)
+                            ax2.set_xlabel('Fraud Probability', fontsize=11, fontweight='bold')
+                            ax2.set_ylabel('Count', fontsize=11, fontweight='bold')
+                            ax2.set_title('Probability Distribution - Model Comparison', fontsize=12, fontweight='bold')
+                            ax2.legend(fontsize=10)
+                            ax2.grid(True, alpha=0.3)
                             
                             st.pyplot(fig2)
                         
-                        st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # Calculate consensus levels
                         models_count = (pred_tuned.astype(int) + pred_rf.astype(int) + pred_xgb.astype(int))
                         avg_prob = (prob_tuned + prob_rf + prob_xgb) / 3
                         
@@ -519,9 +506,7 @@ if check and uploaded_file is not None:
                         fraud_2_models = np.where(models_count == 2)[0]
                         fraud_1_model = np.where(models_count == 1)[0]
                         
-                        # 100% Fraud (All 3 Models Detected)
-                        st.markdown("<div style='background:#fc5c7d;border-radius:15px;padding:15px;margin-bottom:20px;box-shadow:0 4px 12px rgba(252, 92, 125, 0.3);'><div style='font-weight:700;font-size:1.3rem;color:white;'>🔴 100% FRAUD - Detected by All 3 Models</div></div>", unsafe_allow_html=True)
-                        
+                        st.subheader("100% FRAUD - Detected by All 3 Models")
                         if len(fraud_3_models) > 0:
                             fraud_3_df = df.iloc[fraud_3_models].copy()
                             fraud_3_df['Tuned Prob'] = prob_tuned[fraud_3_models]
@@ -532,15 +517,13 @@ if check and uploaded_file is not None:
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability']
                             st.dataframe(fraud_3_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
-                            st.success(f"✅ Found {len(fraud_3_models)} HIGH CONFIDENCE fraud transactions!")
+                            st.success(f"Found {len(fraud_3_models)} HIGH CONFIDENCE fraud transactions!")
                         else:
-                            st.info("ℹ️ No transactions detected as fraud by all 3 models.")
+                            st.info("No transactions detected as fraud by all 3 models.")
                         
-                        st.markdown("<hr style='margin:20px 0;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # 2 Models Detected
-                        st.markdown("<div style='background:#ffb800;border-radius:15px;padding:15px;margin-bottom:20px;box-shadow:0 4px 12px rgba(255, 184, 0, 0.3);'><div style='font-weight:700;font-size:1.3rem;color:white;'>🟠 MEDIUM RISK - Detected by 2 Models</div></div>", unsafe_allow_html=True)
-                        
+                        st.subheader("MEDIUM RISK - Detected by 2 Models")
                         if len(fraud_2_models) > 0:
                             fraud_2_df = df.iloc[fraud_2_models].copy()
                             fraud_2_df['Tuned Prob'] = prob_tuned[fraud_2_models]
@@ -552,15 +535,13 @@ if check and uploaded_file is not None:
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
                             st.dataframe(fraud_2_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
-                            st.warning(f"⚠️ Found {len(fraud_2_models)} MEDIUM RISK fraud transactions!")
+                            st.warning(f"Found {len(fraud_2_models)} MEDIUM RISK fraud transactions!")
                         else:
-                            st.info("ℹ️ No transactions detected as fraud by exactly 2 models.")
+                            st.info("No transactions detected as fraud by exactly 2 models.")
                         
-                        st.markdown("<hr style='margin:20px 0;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # 1 Model Detected
-                        st.markdown("<div style='background:#6a82fb;border-radius:15px;padding:15px;margin-bottom:20px;box-shadow:0 4px 12px rgba(106, 130, 251, 0.3);'><div style='font-weight:700;font-size:1.3rem;color:white;'>🟡 LOW RISK - Detected by 1 Model</div></div>", unsafe_allow_html=True)
-                        
+                        st.subheader("LOW RISK - Detected by 1 Model")
                         if len(fraud_1_model) > 0:
                             fraud_1_df = df.iloc[fraud_1_model].copy()
                             fraud_1_df['Tuned Prob'] = prob_tuned[fraud_1_model]
@@ -572,25 +553,23 @@ if check and uploaded_file is not None:
                             display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
                             st.dataframe(fraud_1_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
                                         use_container_width=True, hide_index=True)
-                            st.info(f"ℹ️ Found {len(fraud_1_model)} LOW RISK fraud transactions!")
+                            st.info(f"Found {len(fraud_1_model)} LOW RISK fraud transactions!")
                         else:
-                            st.info("ℹ️ No transactions detected as fraud by exactly 1 model.")
+                            st.info("No transactions detected as fraud by exactly 1 model.")
                         
-                        st.markdown("<hr style='margin:20px 0;border:2px solid #ffb800;'>", unsafe_allow_html=True)
+                        st.divider()
                         
-                        # Summary Statistics
-                        st.markdown("<div style='font-weight:700;font-size:1.4rem;margin-bottom:16px;color:#232946;'>📋 Risk Summary</div>", unsafe_allow_html=True)
+                        st.subheader("Risk Summary")
+                        col1, col2, col3 = st.columns(3)
                         
-                        summary_col1, summary_col2, summary_col3 = st.columns(3)
+                        with col1:
+                            st.metric("100% Fraud (3/3)", len(fraud_3_models))
                         
-                        with summary_col1:
-                            st.metric("🔴 100% Fraud (3/3)", len(fraud_3_models), delta=None)
+                        with col2:
+                            st.metric("Medium Risk (2/3)", len(fraud_2_models))
                         
-                        with summary_col2:
-                            st.metric("🟠 Medium Risk (2/3)", len(fraud_2_models), delta=None)
-                        
-                        with summary_col3:
-                            st.metric("🟡 Low Risk (1/3)", len(fraud_1_model), delta=None)
+                        with col3:
+                            st.metric("Low Risk (1/3)", len(fraud_1_model))
                         
         except Exception as e:
             st.error(f"Processing error: {str(e)}")
