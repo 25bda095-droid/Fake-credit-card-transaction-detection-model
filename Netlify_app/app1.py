@@ -6,6 +6,16 @@ from sklearn.metrics import roc_curve, auc, recall_score
 
 app = Flask(__name__)
 
+# ... load models and define other routes here ...
+
+@app.route("/")
+def home():
+    return "Fraud Detection API is running."
+
+@app.route("/predict", methods=["POST"])
+def predict():
+
+
 MODELPATH = 'models/fraud_detection_model_tuned.pkl'
 SCALERPATH = 'models/scaler.pkl'
 RANDOMFORESTPATH = 'models/random_Forest_model.pkl'
