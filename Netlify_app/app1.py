@@ -9,10 +9,10 @@ import base64
 
 app = Flask(__name__)
 
-MODELPATH = 'Netlify_app/models/fraud_detection_model_tuned.pkl'
-SCALERPATH = 'Netlify_app/models/scaler.pkl'
-RANDOMFORESTPATH = 'Netlify_app/models/random_Forest_model.pkl'
-XGBOOSTPATH = 'Netlify_app/models/XGBoost_model.joblib'
+MODELPATH = 'models/fraud_detection_model_tuned.pkl'
+SCALERPATH = 'models/scaler.pkl'
+RANDOMFORESTPATH = 'models/random_Forest_model.pkl'
+XGBOOSTPATH = 'models/XGBoost_model.joblib'
 
 # Load all models (cache in memory)
 def load_models():
@@ -78,7 +78,6 @@ def predict():
     }
     return jsonify(response)
 
-
 # Example endpoint for ROC graph (returns PNG base64)
 @app.route("/roc-graph", methods=["POST"])
 def roc_graph():
@@ -109,4 +108,6 @@ def roc_graph():
     return jsonify({"image": img_str})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port)
