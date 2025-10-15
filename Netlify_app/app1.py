@@ -6,15 +6,9 @@ from sklearn.metrics import roc_curve, auc, recall_score
 
 app = Flask(__name__)
 
-# ... load models and define other routes here ...
-
 @app.route("/")
 def home():
     return "Fraud Detection API is running."
-
-@app.route("/predict", methods=["POST"])
-def predict():
-
 
 MODELPATH = 'models/fraud_detection_model_tuned.pkl'
 SCALERPATH = 'models/scaler.pkl'
@@ -36,7 +30,6 @@ def predict():
     if 'file' not in request.files:
         return jsonify(success=False, error="No file uploaded"), 400
     file = request.files['file']
-
     try:
         df = pd.read_csv(file)
     except Exception as e:
@@ -60,7 +53,6 @@ def predict():
     X = df[required_cols].copy()
     X_scaled = scaler.transform(X)
 
-    # Collect predictions from all models
     models_choices = {
         'tuned': tunedmodel,
         'rf': rfmodel,
@@ -72,7 +64,6 @@ def predict():
         prob = model.predict_proba(X_scaled)[:, 1]
         results[key] = {'pred': pred.tolist(), 'prob': prob.tolist()}
 
-    # If true labels available
     y_true = df['Class'].values.tolist() if 'Class' in df.columns else None
 
     response = {
