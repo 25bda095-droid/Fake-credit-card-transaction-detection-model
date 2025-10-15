@@ -2,36 +2,31 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import numpy as np
 import joblib
-import io
 from sklearn.metrics import roc_curve, auc, recall_score
-import matplotlib.pyplot as plt
-import base64
 
 app = Flask(__name__)
 
 MODELPATH = 'models/fraud_detection_model_tuned.pkl'
 SCALERPATH = 'models/scaler.pkl'
 RANDOMFORESTPATH = 'models/random_Forest_model.pkl'
-XGBOOSTPATH = 'models/XGBoost_model.joblib'
+LOGISTICPATH = 'models/LogisticRegression_model.joblib'
 
 # Load all models (cache in memory)
 def load_models():
     tunedmodel = joblib.load(MODELPATH)
     scaler = joblib.load(SCALERPATH)
     rfmodel = joblib.load(RANDOMFORESTPATH)
-    xgbmodel = joblib.load(XGBOOSTPATH)
-    return tunedmodel, scaler, rfmodel, xgbmodel
+    logitmodel = joblib.load(LOGISTICPATH)
+    return tunedmodel, scaler, rfmodel, logitmodel
 
-tunedmodel, scaler, rfmodel, xgbmodel = load_models()
+tunedmodel, scaler, rfmodel, logitmodel = load_models()
 
 @app.route("/predict", methods=["POST"])
 def predict():
     if 'file' not in request.files:
         return jsonify(success=False, error="No file uploaded"), 400
     file = request.files['file']
-    filename = file.filename
 
-    # Support CSV only in backend for simplicity
     try:
         df = pd.read_csv(file)
     except Exception as e:
@@ -59,7 +54,7 @@ def predict():
     models_choices = {
         'tuned': tunedmodel,
         'rf': rfmodel,
-        'xgb': xgbmodel
+        'logistic': logitmodel
     }
     results = {}
     for key, model in models_choices.items():
@@ -77,35 +72,6 @@ def predict():
         'y_true': y_true
     }
     return jsonify(response)
-
-# Example endpoint for ROC graph (returns PNG base64)
-@app.route("/roc-graph", methods=["POST"])
-def roc_graph():
-    data = request.json
-    y_true = np.array(data['y_true'])
-    probs = {
-        "tuned": np.array(data["tuned_probs"]),
-        "rf": np.array(data["rf_probs"]),
-        "xgb": np.array(data["xgb_probs"])
-    }
-
-    fig, ax = plt.subplots(figsize=(8, 6))
-    for key, prob in probs.items():
-        fpr, tpr, _ = roc_curve(y_true, prob)
-        roc_auc = auc(fpr, tpr)
-        ax.plot(fpr, tpr, label=f"{key.upper()} (AUC={roc_auc:.2f})")
-
-    ax.plot([0, 1], [0, 1], color="gray", lw=2, linestyle="--")
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title('ROC Curve Comparison')
-    ax.legend(loc="lower right")
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png")
-    buf.seek(0)
-    img_str = base64.b64encode(buf.read()).decode("utf8")
-    plt.close(fig)
-    return jsonify({"image": img_str})
 
 if __name__ == "__main__":
     import os
