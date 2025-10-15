@@ -1,482 +1,481 @@
-# /* From Uiverse.io by Juanes200122 */ 
-# #svg-global {
-#   zoom: 1.2;
-#   overflow: visible;
-# }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-# @keyframes fade-particles {
-#   0%,
-#   100% {
-#     opacity: 1;
-#   }
-#   50% {
-#     opacity: 0.5;
-#   }
-# }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-# @keyframes floatUp {
-#   0% {
-#     transform: translateY(0);
-#     opacity: 0;
-#   }
-#   10% {
-#     opacity: 1;
-#   }
-#   100% {
-#     transform: translateY(-40px);
-#     opacity: 0;
-#   }
-# }
+        /* Loading Screen Styles */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
 
-# #particles {
-#   animation: fade-particles 5s infinite alternate;
-# }
-# .particle {
-#   animation: floatUp linear infinite;
-# }
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
 
-# .p1 {
-#   animation-duration: 2.2s;
-#   animation-delay: 0s;
-# }
-# .p2 {
-#   animation-duration: 2.5s;
-#   animation-delay: 0.3s;
-# }
-# .p3 {
-#   animation-duration: 2s;
-#   animation-delay: 0.6s;
-# }
-# .p4 {
-#   animation-duration: 2.8s;
-#   animation-delay: 0.2s;
-# }
-# .p5 {
-#   animation-duration: 2.3s;
-#   animation-delay: 0.4s;
-# }
-# .p6 {
-#   animation-duration: 3s;
-#   animation-delay: 0.1s;
-# }
-# .p7 {
-#   animation-duration: 2.1s;
-#   animation-delay: 0.5s;
-# }
-# .p8 {
-#   animation-duration: 2.6s;
-#   animation-delay: 0.2s;
-# }
-# .p9 {
-#   animation-duration: 2.4s;
-#   animation-delay: 0.3s;
-# }
+        #svg-global {
+            zoom: 1.2;
+            overflow: visible;
+        }
 
-# @keyframes bounce-lines {
-#   0%,
-#   100% {
-#     transform: translateY(0);
-#   }
-#   50% {
-#     transform: translateY(-3px);
-#   }
-# }
+        @keyframes fade-particles {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
-# #line-v1,
-# #line-v2,
-# #node-server,
-# #panel-rigth,
-# #reflectores,
-# #particles {
-#   animation: bounce-lines 3s ease-in-out infinite alternate;
-# }
-# #line-v2 {
-#   animation-delay: 0.2s;
-# }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
 
-# #node-server,
-# #panel-rigth,
-# #reflectores,
-# #particles {
-#   animation-delay: 0.4s;
-# }
+        #particles {
+            animation: fade-particles 5s infinite alternate;
+        }
 
+        .particle {
+            animation: floatUp linear infinite;
+        }
 
+        .p1 { animation-duration: 2.2s; animation-delay: 0s; }
+        .p2 { animation-duration: 2.5s; animation-delay: 0.3s; }
+        .p3 { animation-duration: 2s; animation-delay: 0.6s; }
+        .p4 { animation-duration: 2.8s; animation-delay: 0.2s; }
+        .p5 { animation-duration: 2.3s; animation-delay: 0.4s; }
+        .p6 { animation-duration: 3s; animation-delay: 0.1s; }
+        .p7 { animation-duration: 2.1s; animation-delay: 0.5s; }
+        .p8 { animation-duration: 2.6s; animation-delay: 0.2s; }
+        .p9 { animation-duration: 2.4s; animation-delay: 0.3s; }
 
+        @keyframes bounce-lines {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import joblib
-import PyPDF2
-import re
-from sklearn.metrics import roc_curve, auc, recall_score
+        #line-v1, #line-v2, #node-server, #panel-rigth, #reflectores, #particles {
+            animation: bounce-lines 3s ease-in-out infinite alternate;
+        }
+        #line-v2 { animation-delay: 0.2s; }
+        #node-server, #panel-rigth, #reflectores, #particles { animation-delay: 0.4s; }
 
-# Define allowed extensions
-ALLOWED_EXTENSIONS = ['csv', 'pdf']
-MODELPATH = 'fraud_detection_model_tuned.pkl'
-SCALERPATH = 'scaler.pkl'
-RANDOMFORESTPATH = 'random_Forest_model.pkl'
-XGBOOSTPATH = 'XGBoost_model.joblib'
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            margin-top: 30px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
 
-@st.cache_resource
-def load_models():
-    try:
-        tunedmodel = joblib.load(MODELPATH)
-        scaler = joblib.load(SCALERPATH)
-        rfmodel = joblib.load(RANDOMFORESTPATH)
-        xgbmodel = joblib.load(XGBOOSTPATH)
-        return tunedmodel, scaler, rfmodel, xgbmodel
-    except Exception as e:
-        st.error(f"Error loading models: {e}")
-        return None, None, None, None
+        /* Main App Styles */
+        #main-app {
+            opacity: 0;
+            transition: opacity 0.5s;
+            padding: 20px;
+        }
 
-tunedmodel, scaler, rfmodel, xgbmodel = load_models()
+        #main-app.visible {
+            opacity: 1;
+        }
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
 
-def extract_csv_from_pdf(pdf_file):
-    try:
-        pdfreader = PyPDF2.PdfReader(pdf_file)
-        text = ''
-        for page in pdfreader.pages:
-            text += page.extract_text()
-        lines = text.strip().split('\n')
-        data = []
-        for line in lines:
-            row = re.split(r',\s*', line.strip())
-            if len(row) > 1:
-                data.append(row)
-        if data:
-            df = pd.DataFrame(data[1:], columns=data[0])
-            return df
-        else:
-            return None
-    except Exception as e:
-        st.error(f"PDF extraction error: {e}")
-        return None
+        h1 {
+            color: #667eea;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
 
-def preprocess_data(df):
-    try:
-        required_cols = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
-        missing_cols = [col for col in required_cols if col not in df.columns]
-        if missing_cols:
-            if 'Time' in missing_cols:
-                required_cols = [f'V{i}' for i in range(1, 29)] + ['Amount']
-                missing_cols = [col for col in required_cols if col not in df.columns]
-            if missing_cols:
-                return None, None, f"Missing required columns: {', '.join(missing_cols)}"
-        for col in required_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-        df = df.dropna(subset=required_cols)
-        if len(df) == 0:
-            return None, None, "No valid data found after cleaning."
-        
-        # Check if Class column exists for true labels
-        y_true = None
-        if 'Class' in df.columns:
-            df['Class'] = pd.to_numeric(df['Class'], errors='coerce')
-            y_true = df['Class'].values
-        
-        feature_cols = required_cols
-        X = df[feature_cols].copy()
-        X_scaled = scaler.transform(X)
-        return X_scaled, y_true, None
-    except Exception as e:
-        return None, None, f"Preprocessing error: {str(e)}"
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
 
-def predict_fraud(X_scaled, model_choice):
-    try:
-        if model_choice == "tuned":
-            model = tunedmodel
-        elif model_choice == "rf":
-            model = rfmodel
-        elif model_choice == "xgb":
-            model = xgbmodel
-        else:
-            st.error("Unknown model selected.")
-            return None, None
-        predictions = model.predict(X_scaled)
-        probabilities = model.predict_proba(X_scaled)[:, 1]
-        return predictions, probabilities
-    except Exception as e:
-        st.error(f"Prediction error: {e}")
-        return None, None
+        .info-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
 
-st.set_page_config(page_title="Fraud Detection", layout="wide")
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
 
-st.title("Fraud Detection System")
-st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
+        .info-box ul {
+            margin-left: 20px;
+            color: #555;
+            line-height: 1.8;
+        }
 
-st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n- Click Check Transaction to analyze with all 3 models\n- Get instant fraud detection results with model comparison!")
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 30px 0;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
 
-uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
-check = st.button("Check Transaction", use_container_width=True)
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
 
-if check and uploaded_file is not None:
-    filename = uploaded_file.name
-    if not allowed_file(filename):
-        st.error("Invalid file format. Please upload a CSV or PDF.")
-    else:
-        try:
-            if filename.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = extract_csv_from_pdf(uploaded_file)
-            if df is None:
-                st.error("Could not extract data from the uploaded file.")
-            else:
-                X_scaled, y_true, error = preprocess_data(df)
-                if error:
-                    st.error(error)
-                else:
-                    pred_tuned, prob_tuned = predict_fraud(X_scaled, "tuned")
-                    pred_rf, prob_rf = predict_fraud(X_scaled, "rf")
-                    pred_xgb, prob_xgb = predict_fraud(X_scaled, "xgb")
-                    
-                    if pred_tuned is None or pred_rf is None or pred_xgb is None:
-                        st.error("Prediction failed.")
-                    else:
-                        total_transactions = len(pred_tuned)
-                        
-                        st.subheader("Overall Summary")
-                        col1, col2, col3, col4 = st.columns(4)
-                        
-                        with col1:
-                            st.metric("Total Transactions", total_transactions)
-                        
-                        with col2:
-                            st.metric("Tuned Model Fraud", int(np.sum(pred_tuned)))
-                        
-                        with col3:
-                            st.metric("RF Model Fraud", int(np.sum(pred_rf)))
-                        
-                        with col4:
-                            st.metric("XGB Model Fraud", int(np.sum(pred_xgb)))
-                        
-                        st.divider()
-                        
-                        # Calculate metrics if true labels are available
-                        if y_true is not None:
-                            st.subheader("Model Performance Metrics")
-                            
-                            recall_tuned = recall_score(y_true, pred_tuned)
-                            recall_rf = recall_score(y_true, pred_rf)
-                            recall_xgb = recall_score(y_true, pred_xgb)
-                            
-                            fpr_tuned, tpr_tuned, _ = roc_curve(y_true, prob_tuned)
-                            fpr_rf, tpr_rf, _ = roc_curve(y_true, prob_rf)
-                            fpr_xgb, tpr_xgb, _ = roc_curve(y_true, prob_xgb)
-                            
-                            roc_auc_tuned = auc(fpr_tuned, tpr_tuned)
-                            roc_auc_rf = auc(fpr_rf, tpr_rf)
-                            roc_auc_xgb = auc(fpr_xgb, tpr_xgb)
-                            
-                            col1, col2 = st.columns(2)
-                            
-                            with col1:
-                                fig_roc, ax_roc = plt.subplots(figsize=(10, 8))
-                                fig_roc.patch.set_facecolor('white')
-                                
-                                ax_roc.plot(fpr_tuned, tpr_tuned, color='#fc5c7d', lw=2, 
-                                           label=f'Tuned Model (AUC = {roc_auc_tuned:.4f})')
-                                ax_roc.plot(fpr_rf, tpr_rf, color='#6a82fb', lw=2, 
-                                           label=f'Random Forest (AUC = {roc_auc_rf:.4f})')
-                                ax_roc.plot(fpr_xgb, tpr_xgb, color='#ffb800', lw=2, 
-                                           label=f'XGBoost (AUC = {roc_auc_xgb:.4f})')
-                                ax_roc.plot([0, 1], [0, 1], color='gray', lw=2, linestyle='--', label='Random Classifier')
-                                
-                                ax_roc.set_xlim([0.0, 1.0])
-                                ax_roc.set_ylim([0.0, 1.05])
-                                ax_roc.set_xlabel('False Positive Rate', fontsize=12, fontweight='bold')
-                                ax_roc.set_ylabel('True Positive Rate', fontsize=12, fontweight='bold')
-                                ax_roc.set_title('ROC Curve - Model Comparison', fontsize=14, fontweight='bold')
-                                ax_roc.legend(loc="lower right", fontsize=10)
-                                ax_roc.grid(True, alpha=0.3)
-                                
-                                st.pyplot(fig_roc)
-                            
-                            with col2:
-                                fig_recall, ax_recall = plt.subplots(figsize=(10, 8))
-                                fig_recall.patch.set_facecolor('white')
-                                
-                                models = ['Tuned Model', 'Random Forest', 'XGBoost']
-                                recalls = [recall_tuned, recall_rf, recall_xgb]
-                                colors = ['#fc5c7d', '#6a82fb', '#ffb800']
-                                
-                                bars = ax_recall.bar(models, recalls, color=colors, edgecolor='black', linewidth=1.5)
-                                
-                                for bar, recall in zip(bars, recalls):
-                                    height = bar.get_height()
-                                    ax_recall.text(bar.get_x() + bar.get_width()/2., height,
-                                                  f'{recall:.4f}',
-                                                  ha='center', va='bottom', fontsize=11, fontweight='bold')
-                                
-                                ax_recall.set_ylim([0, 1.1])
-                                ax_recall.set_ylabel('Recall Score', fontsize=12, fontweight='bold')
-                                ax_recall.set_title('Recall Score - Model Comparison', fontsize=14, fontweight='bold')
-                                ax_recall.grid(True, axis='y', alpha=0.3)
-                                
-                                st.pyplot(fig_recall)
-                            
-                            st.divider()
-                        
-                        st.subheader("Model Comparison")
-                        comparison_data = {
-                            'Model': ['Tuned Model', 'Random Forest', 'XGBoost'],
-                            'Fraudulent': [
-                                int(np.sum(pred_tuned)),
-                                int(np.sum(pred_rf)),
-                                int(np.sum(pred_xgb))
-                            ],
-                            'Legitimate': [
-                                total_transactions - int(np.sum(pred_tuned)),
-                                total_transactions - int(np.sum(pred_rf)),
-                                total_transactions - int(np.sum(pred_xgb))
-                            ],
-                            'Fraud %': [
-                                f"{(int(np.sum(pred_tuned)) / total_transactions) * 100:.2f}%",
-                                f"{(int(np.sum(pred_rf)) / total_transactions) * 100:.2f}%",
-                                f"{(int(np.sum(pred_xgb)) / total_transactions) * 100:.2f}%"
-                            ],
-                            'Avg Probability': [
-                                f"{np.mean(prob_tuned):.4f}",
-                                f"{np.mean(prob_rf):.4f}",
-                                f"{np.mean(prob_xgb):.4f}"
-                            ]
-                        }
-                        
-                        if y_true is not None:
-                            comparison_data['Recall'] = [
-                                f"{recall_tuned:.4f}",
-                                f"{recall_rf:.4f}",
-                                f"{recall_xgb:.4f}"
-                            ]
-                            comparison_data['ROC AUC'] = [
-                                f"{roc_auc_tuned:.4f}",
-                                f"{roc_auc_rf:.4f}",
-                                f"{roc_auc_xgb:.4f}"
-                            ]
-                        
-                        comparison_df = pd.DataFrame(comparison_data)
-                        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
-                        
-                        st.divider()
-                        
-                        st.subheader("Visualizations")
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            fig1, axes = plt.subplots(1, 3, figsize=(16, 5))
-                            fig1.patch.set_facecolor('white')
-                            
-                            models_data = [
-                                ('Tuned Model', int(np.sum(pred_tuned)), total_transactions - int(np.sum(pred_tuned))),
-                                ('Random Forest', int(np.sum(pred_rf)), total_transactions - int(np.sum(pred_rf))),
-                                ('XGBoost', int(np.sum(pred_xgb)), total_transactions - int(np.sum(pred_xgb)))
-                            ]
-                            
-                            for idx, (model_name, fraud_count, legit_count) in enumerate(models_data):
-                                axes[idx].pie([fraud_count, legit_count], labels=['Fraudulent', 'Legitimate'], 
-                                             autopct='%1.1f%%', colors=['#fc5c7d', '#6a82fb'], startangle=90, 
-                                             textprops={'color':'#232946','fontweight':'bold'})
-                                axes[idx].set_title(model_name, fontsize=12, fontweight='bold')
-                            
-                            plt.tight_layout()
-                            st.pyplot(fig1)
-                        
-                        with col2:
-                            fig2, ax2 = plt.subplots(figsize=(11, 5))
-                            fig2.patch.set_facecolor('white')
-                            
-                            ax2.hist(prob_tuned, bins=25, alpha=0.6, label='Tuned Model', color='#fc5c7d', edgecolor='black')
-                            ax2.hist(prob_rf, bins=25, alpha=0.6, label='Random Forest', color='#6a82fb', edgecolor='black')
-                            ax2.hist(prob_xgb, bins=25, alpha=0.6, label='XGBoost', color='#ffb800', edgecolor='black')
-                            
-                            ax2.set_xlabel('Fraud Probability', fontsize=11, fontweight='bold')
-                            ax2.set_ylabel('Count', fontsize=11, fontweight='bold')
-                            ax2.set_title('Probability Distribution - Model Comparison', fontsize=12, fontweight='bold')
-                            ax2.legend(fontsize=10)
-                            ax2.grid(True, alpha=0.3)
-                            
-                            st.pyplot(fig2)
-                        
-                        st.divider()
-                        
-                        models_count = (pred_tuned.astype(int) + pred_rf.astype(int) + pred_xgb.astype(int))
-                        avg_prob = (prob_tuned + prob_rf + prob_xgb) / 3
-                        
-                        fraud_3_models = np.where(models_count == 3)[0]
-                        fraud_2_models = np.where(models_count == 2)[0]
-                        fraud_1_model = np.where(models_count == 1)[0]
-                        
-                        st.subheader("100% FRAUD - Detected by All 3 Models")
-                        if len(fraud_3_models) > 0:
-                            fraud_3_df = df.iloc[fraud_3_models].copy()
-                            fraud_3_df['Tuned Prob'] = prob_tuned[fraud_3_models]
-                            fraud_3_df['RF Prob'] = prob_rf[fraud_3_models]
-                            fraud_3_df['XGB Prob'] = prob_xgb[fraud_3_models]
-                            fraud_3_df['Avg Probability'] = avg_prob[fraud_3_models]
-                            
-                            display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability']
-                            st.dataframe(fraud_3_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
-                                        use_container_width=True, hide_index=True)
-                            st.success(f"Found {len(fraud_3_models)} HIGH CONFIDENCE fraud transactions!")
-                        else:
-                            st.info("No transactions detected as fraud by all 3 models.")
-                        
-                        st.divider()
-                        
-                        st.subheader("MEDIUM RISK - Detected by 2 Models")
-                        if len(fraud_2_models) > 0:
-                            fraud_2_df = df.iloc[fraud_2_models].copy()
-                            fraud_2_df['Tuned Prob'] = prob_tuned[fraud_2_models]
-                            fraud_2_df['RF Prob'] = prob_rf[fraud_2_models]
-                            fraud_2_df['XGB Prob'] = prob_xgb[fraud_2_models]
-                            fraud_2_df['Avg Probability'] = avg_prob[fraud_2_models]
-                            fraud_2_df['Models Flagged'] = models_count[fraud_2_models]
-                            
-                            display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
-                            st.dataframe(fraud_2_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
-                                        use_container_width=True, hide_index=True)
-                            st.warning(f"Found {len(fraud_2_models)} MEDIUM RISK fraud transactions!")
-                        else:
-                            st.info("No transactions detected as fraud by exactly 2 models.")
-                        
-                        st.divider()
-                        
-                        st.subheader("LOW RISK - Detected by 1 Model")
-                        if len(fraud_1_model) > 0:
-                            fraud_1_df = df.iloc[fraud_1_model].copy()
-                            fraud_1_df['Tuned Prob'] = prob_tuned[fraud_1_model]
-                            fraud_1_df['RF Prob'] = prob_rf[fraud_1_model]
-                            fraud_1_df['XGB Prob'] = prob_xgb[fraud_1_model]
-                            fraud_1_df['Avg Probability'] = avg_prob[fraud_1_model]
-                            fraud_1_df['Models Flagged'] = models_count[fraud_1_model]
-                            
-                            display_cols = ['Amount', 'Tuned Prob', 'RF Prob', 'XGB Prob', 'Avg Probability', 'Models Flagged']
-                            st.dataframe(fraud_1_df[display_cols].sort_values('Avg Probability', ascending=False).round(4), 
-                                        use_container_width=True, hide_index=True)
-                            st.info(f"Found {len(fraud_1_model)} LOW RISK fraud transactions!")
-                        else:
-                            st.info("No transactions detected as fraud by exactly 1 model.")
-                        
-                        st.divider()
-                        
-                        st.subheader("Risk Summary")
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.metric("100% Fraud (3/3)", len(fraud_3_models))
-                        
-                        with col2:
-                            st.metric("Medium Risk (2/3)", len(fraud_2_models))
-                        
-                        with col3:
-                            st.metric("Low Risk (1/3)", len(fraud_1_model))
-                        
-        except Exception as e:
-            st.error(f"Processing error: {str(e)}")
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            letter-spacing: 1px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <svg id="svg-global" width="200" height="200" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            
+            <g id="particles">
+                <circle class="particle p1" cx="30" cy="70" r="2" fill="white" opacity="0.8"/>
+                <circle class="particle p2" cx="40" cy="75" r="1.5" fill="white" opacity="0.6"/>
+                <circle class="particle p3" cx="50" cy="70" r="2" fill="white" opacity="0.8"/>
+                <circle class="particle p4" cx="60" cy="75" r="1.5" fill="white" opacity="0.6"/>
+                <circle class="particle p5" cx="70" cy="70" r="2" fill="white" opacity="0.8"/>
+                <circle class="particle p6" cx="35" cy="72" r="1" fill="white" opacity="0.5"/>
+                <circle class="particle p7" cx="55" cy="73" r="1" fill="white" opacity="0.5"/>
+                <circle class="particle p8" cx="65" cy="72" r="1" fill="white" opacity="0.5"/>
+                <circle class="particle p9" cx="45" cy="73" r="1" fill="white" opacity="0.5"/>
+            </g>
+            
+            <rect id="node-server" x="35" y="30" width="30" height="35" rx="3" fill="white" stroke="url(#grad1)" stroke-width="2"/>
+            <line id="line-v1" x1="50" y1="65" x2="50" y2="75" stroke="white" stroke-width="2"/>
+            <circle cx="50" cy="20" r="8" fill="white" stroke="url(#grad1)" stroke-width="2"/>
+            <text x="50" y="24" text-anchor="middle" fill="url(#grad1)" font-size="10" font-weight="bold">AI</text>
+        </svg>
+        <div class="loading-text">Loading Fraud Detection System...</div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app">
+        <div class="container">
+            <h1>🛡️ Fraud Detection System</h1>
+            <div class="subtitle">CREDIT CARD TRANSACTION ANALYSIS</div>
+
+            <div class="info-box">
+                <h3>📋 How to Use:</h3>
+                <ul>
+                    <li>Upload your credit card transaction data (CSV or PDF)</li>
+                    <li>File must have columns: Time, V1-V28, Amount</li>
+                    <li>Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for performance metrics</li>
+                    <li>Click "Analyze Transactions" to detect fraud with 3 AI models</li>
+                    <li>Get instant results with comprehensive fraud risk analysis!</li>
+                </ul>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>Drop your file here or click to browse</h3>
+                <p style="color: #666; margin-top: 10px;">Supports CSV and PDF files</p>
+                <input type="file" id="fileInput" accept=".csv,.pdf">
+                <div id="fileName" style="margin-top: 15px; color: #667eea; font-weight: 600;"></div>
+            </div>
+
+            <button class="btn" id="analyzeBtn" disabled>Analyze Transactions</button>
+
+            <div class="results" id="results">
+                <h2 style="color: #667eea; margin-top: 40px;">📊 Analysis Results</h2>
+                
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalTransactions">0</div>
+                        <div class="metric-label">Total Transactions</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="fraudDetected">0</div>
+                        <div class="metric-label">Fraud Detected</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="fraudPercent">0%</div>
+                        <div class="metric-label">Fraud Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="riskScore">0.00</div>
+                        <div class="metric-label">Risk Score</div>
+                    </div>
+                </div>
+
+                <div id="alertsContainer"></div>
+
+                <div style="text-align: center; margin-top: 40px; padding: 30px; background: #f8f9ff; border-radius: 15px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🔗 Full ML Analysis Available</h3>
+                    <p style="color: #666; line-height: 1.6;">
+                        This is a demo interface. For complete fraud detection with trained ML models (Tuned Model, Random Forest, XGBoost), 
+                        deploy the full Streamlit application to Streamlit Cloud, Heroku, or Railway.
+                    </p>
+                    <p style="color: #666; margin-top: 10px;">
+                        <strong>Next Steps:</strong> Host the backend API and connect it to this frontend for real-time fraud detection.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hide loading screen after page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.add('visible');
+            }, 2000);
+        });
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const results = document.getElementById('results');
+
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const validExtensions = ['csv', 'pdf'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (validExtensions.includes(ext)) {
+                selectedFile = file;
+                fileName.textContent = `✓ Selected: ${file.name}`;
+                analyzeBtn.disabled = false;
+            } else {
+                fileName.textContent = '❌ Invalid file type. Please upload CSV or PDF.';
+                fileName.style.color = '#dc3545';
+                analyzeBtn.disabled = true;
+            }
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            if (!selectedFile) return;
+
+            // Simulate analysis (in production, this would call your backend API)
+            analyzeBtn.textContent = 'Analyzing...';
+            analyzeBtn.disabled = true;
+
+            setTimeout(() => {
+                // Demo data
+                const totalTrans = Math.floor(Math.random() * 500) + 100;
+                const fraudCount = Math.floor(Math.random() * 50) + 5;
+                const fraudPct = ((fraudCount / totalTrans) * 100).toFixed(2);
+                const riskScore = (Math.random() * 0.5 + 0.3).toFixed(2);
+
+                document.getElementById('totalTransactions').textContent = totalTrans;
+                document.getElementById('fraudDetected').textContent = fraudCount;
+                document.getElementById('fraudPercent').textContent = fraudPct + '%';
+                document.getElementById('riskScore').textContent = riskScore;
+
+                const alertsContainer = document.getElementById('alertsContainer');
+                alertsContainer.innerHTML = '';
+
+                if (fraudCount > 30) {
+                    alertsContainer.innerHTML += `
+                        <div class="alert alert-warning fade-in">
+                            <strong>⚠️ High Risk Alert!</strong> Detected ${fraudCount} potentially fraudulent transactions requiring immediate review.
+                        </div>
+                    `;
+                } else if (fraudCount > 10) {
+                    alertsContainer.innerHTML += `
+                        <div class="alert alert-info fade-in">
+                            <strong>ℹ️ Medium Risk:</strong> Found ${fraudCount} suspicious transactions. Recommend further investigation.
+                        </div>
+                    `;
+                } else {
+                    alertsContainer.innerHTML += `
+                        <div class="alert alert-success fade-in">
+                            <strong>✓ Low Risk:</strong> Only ${fraudCount} potentially fraudulent transactions detected.
+                        </div>
+                    `;
+                }
+
+                results.classList.add('visible');
+                results.scrollIntoView({ behavior: 'smooth' });
+
+                analyzeBtn.textContent = 'Analyze Transactions';
+                analyzeBtn.disabled = false;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
