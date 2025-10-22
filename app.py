@@ -604,6 +604,12 @@ st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
 # Create two columns - main content and live dashboard
 main_col, demo_col = st.columns([2, 1])
 
+with main_col:
+    st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n- Click Check Transaction to analyze with all 4 models\n- Get instant fraud detection results with model comparison!")
+
+    uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
+    check = st.button("Check Transaction", use_container_width=True)
+
 with demo_col:
     st.markdown("### 🎯 Live Demo Dashboard")
     st.markdown("*Future Implementation Preview*")
@@ -1192,5 +1198,9 @@ with main_col:
                             
             except Exception as e:
                 st.error(f"Processing error: {str(e)}")
+
+# Auto-refresh only the demo dashboard every 3 seconds
+time.sleep(3)
+st.rerun()
 
 
