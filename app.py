@@ -379,10 +379,6 @@
 #         except Exception as e:
 #             st.error(f"Processing error: {str(e)}")
 
-
-
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -400,6 +396,7 @@ RANDOM_FOREST_PATH = 'random_Forest_model.pkl'
 XGBOOST_PATH = 'XGBoost_model.joblib'
 LOGISTIC_REGRESSION_PATH = 'logistic_regression_model.joblib'
 SCALER_PATH = 'scaler.pkl'
+SCALER_JOBLIB_PATH = 'scaler.joblib'
 
 @st.cache_resource
 def load_models():
@@ -408,7 +405,13 @@ def load_models():
         rf_model = joblib.load(RANDOM_FOREST_PATH)
         xgb_model = joblib.load(XGBOOST_PATH)
         lr_model = joblib.load(LOGISTIC_REGRESSION_PATH)
-        scaler = joblib.load(SCALER_PATH)
+        
+        # Try to load scaler.pkl first, if not found try scaler.joblib
+        try:
+            scaler = joblib.load(SCALER_PATH)
+        except:
+            scaler = joblib.load(SCALER_JOBLIB_PATH)
+        
         return dt_model, rf_model, xgb_model, lr_model, scaler
     except Exception as e:
         st.error(f"Error loading models: {e}")
@@ -809,6 +812,5 @@ if check and uploaded_file is not None:
                         
         except Exception as e:
             st.error(f"Processing error: {str(e)}")
-
 
 
