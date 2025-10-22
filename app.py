@@ -433,7 +433,6 @@
                         
 #         except Exception as e:
 #             st.error(f"Processing error: {str(e)}")
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -1198,9 +1197,4 @@ with main_col:
                             
             except Exception as e:
                 st.error(f"Processing error: {str(e)}")
-
-# Auto-refresh only the demo dashboard every 3 seconds
-time.sleep(3)
-st.rerun()
-
 
