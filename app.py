@@ -448,7 +448,7 @@ from sklearn.metrics import roc_curve, auc, recall_score
 import time
 from datetime import datetime
 
-# --- MODEL LOADING ---
+# Define allowed extensions and paths
 ALLOWED_EXTENSIONS = ['csv', 'pdf']
 DECISION_TREE_PATH = 'decision_tree_model.joblib'
 RANDOM_FOREST_PATH = 'random_Forest_model.pkl'
@@ -475,7 +475,6 @@ def load_models():
 
 dt_model, rf_model, xgb_model, lr_model, scaler = load_models()
 
-# --- FUNCTION DEFINITIONS ---
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -539,7 +538,6 @@ def predict_fraud(X_scaled, model_choice):
         st.error(f"Prediction error: {e}")
         return None, None
 
-# --- LIVE DASHBOARD FUNCTIONS ---
 def generate_demo_transaction():
     merchants = ["Amazon", "Walmart", "Target", "Starbucks", "McDonald's", "Shell Gas", "Apple Store", "Best Buy", "Netflix", "Uber"]
     transaction_id = f"TXN{np.random.randint(100000, 999999)}"
@@ -565,6 +563,7 @@ def generate_demo_transaction():
     }
     return txn_dict
 
+# Session state for dashboard
 if 'demo_transactions' not in st.session_state:
     st.session_state.demo_transactions = []
     st.session_state.last_update = time.time()
@@ -576,8 +575,10 @@ with main_col:
     st.title("Fraud Detection System")
     st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
     st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n- Click Check Transaction to analyze with all 4 models\n- Get instant fraud detection results with model comparison!")
+
     uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
     check = st.button("Check Transaction", use_container_width=True)
+
     if check and uploaded_file is not None:
         filename = uploaded_file.name
         if not allowed_file(filename):
@@ -611,10 +612,11 @@ with main_col:
                             with col4: st.metric("XGBoost Fraud", int(np.sum(pred_xgb)))
                             with col5: st.metric("Logistic Regression Fraud", int(np.sum(pred_lr)))
                             st.divider()
+            except Exception as e:
+                st.error(f"Processing error: {str(e)}")
 
 # --- LIVE DASHBOARD (RIGHT SIDE) ---
 with dashboard_col:
-    # --- Auto-refresh ONLY dashboard every 3 seconds ---
     st_autorefresh(interval=3000, key="fraud_dashboard")
     st.markdown("### 🎯 Live Fraud Transaction Dashboard")
     st.caption("Demo of real-time transaction feed (refreshes independently)")
@@ -678,10 +680,3 @@ with dashboard_col:
         """, unsafe_allow_html=True)
 
     st.caption("Dashboard demo is independent from model results and does not affect your uploaded analysis.")
-
-
-
-
-
-
-
