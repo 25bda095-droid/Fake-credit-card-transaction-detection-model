@@ -447,27 +447,26 @@ import time
 from datetime import datetime
 
 # --- Model Paths ---
-DECISION_TREE_PATH = 'decision_tree_model.joblib'
-RANDOM_FOREST_PATH = 'random_Forest_model.pkl'
-XGBOOST_PATH = 'XGBoost_model.joblib'
-LOGISTIC_REGRESSION_PATH = 'logistic_regression_model.joblib'
-SCALER_PATH = 'scaler.pkl'
-SCALER_JOBLIB_PATH = 'scaler.joblib'
-
+DT_PATH = 'decision_tree_model.joblib'
+RF_PATH = 'random_Forest_model.pkl'
+XGB_PATH = 'XGBoost_model.joblib'
+LR_PATH = 'logistic_regression_model.joblib'
+SCALER_PKL = 'scaler.pkl'
+SCALER_JOBLIB = 'scaler.joblib'
 ALLOWED_EXTENSIONS = ['csv', 'pdf']
 
 @st.cache_resource
 def load_models():
     try:
-        dt_model = joblib.load(DECISION_TREE_PATH)
-        rf_model = joblib.load(RANDOM_FOREST_PATH)
-        xgb_model = joblib.load(XGBOOST_PATH)
-        lr_model = joblib.load(LOGISTIC_REGRESSION_PATH)
+        dt = joblib.load(DT_PATH)
+        rf = joblib.load(RF_PATH)
+        xgb = joblib.load(XGB_PATH)
+        lr = joblib.load(LR_PATH)
         try:
-            scaler = joblib.load(SCALER_PATH)
+            scaler = joblib.load(SCALER_PKL)
         except:
-            scaler = joblib.load(SCALER_JOBLIB_PATH)
-        return dt_model, rf_model, xgb_model, lr_model, scaler
+            scaler = joblib.load(SCALER_JOBLIB)
+        return dt, rf, xgb, lr, scaler
     except Exception as e:
         st.error(f"Error loading models: {e}")
         return None, None, None, None, None
@@ -535,28 +534,15 @@ def predict_fraud(X_scaled, model):
 
 def generate_demo_transaction():
     merchants = ["Amazon", "Walmart", "Target", "Starbucks", "McDonald's", "Shell Gas", "Apple Store", "Best Buy", "Netflix", "Uber"]
-    transaction_id = f"TXN{np.random.randint(100000, 999999)}"
-    amount = np.random.choice([
-        np.random.uniform(5, 500),
-        np.random.uniform(1000, 5000) if np.random.random() < 0.15 else np.random.uniform(5, 500)
-    ])
+    t_id = f"TXN{np.random.randint(100000, 999999)}"
+    amount = np.random.choice([np.random.uniform(5, 500), np.random.uniform(1000, 5000) if np.random.random() < 0.15 else np.random.uniform(5, 500)])
     is_fraud = np.random.random() < 0.20
     fraud_prob = np.random.uniform(0.7, 0.99) if is_fraud else np.random.uniform(0.01, 0.35)
     merchant = np.random.choice(merchants)
     card_last4 = f"****{np.random.randint(1000, 9999)}"
     status = 'pending'
-    txn_dict = {
-        'id': transaction_id,
-        'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'amount': amount,
-        'merchant': merchant,
-        'card': card_last4,
-        'fraud_prob': fraud_prob,
-        'is_fraud': is_fraud,
-        'status': status,
-        'created_at': time.time()
-    }
-    return txn_dict
+    return dict(id=t_id, datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), amount=amount, merchant=merchant, card=card_last4,
+                fraud_prob=fraud_prob, is_fraud=is_fraud, status=status, created_at=time.time())
 
 if 'demo_transactions' not in st.session_state:
     st.session_state.demo_transactions = []
@@ -568,10 +554,14 @@ if "analysis_results" not in st.session_state:
 st.set_page_config(page_title="Fraud Detection", layout="wide")
 main_col, dashboard_col = st.columns([2, 1])
 
+# ========= LEFT: APP UI & RESULTS =========
 with main_col:
     st.title("Fraud Detection System")
     st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
-    st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n- Click Check Transaction to analyze with all 4 models\n- Get instant fraud detection results with model comparison!")
+    st.info(
+        "How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n"
+        "- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n"
+        "- Click Check Transaction to analyze with all 4 models")
 
     uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
     check = st.button("Check Transaction", use_container_width=True)
@@ -593,7 +583,12 @@ with main_col:
                     if error:
                         st.error(error)
                     else:
-                        models = {"Tuned Model": dt_model, "Random Forest": rf_model, "XGBoost": xgb_model}
+                        models = {
+                            "Decision Tree": dt_model,
+                            "Random Forest": rf_model,
+                            "XGBoost": xgb_model,
+                            "Logistic Regression": lr_model,
+                        }
                         preds, probs = {}, {}
                         for name, model in models.items():
                             pred, prob = predict_fraud(X_scaled, model)
@@ -623,6 +618,7 @@ with main_col:
             except Exception as e:
                 st.error(f"Processing error: {str(e)}")
 
+    # Display results after analysis and on every rerun!
     if st.session_state.show_results and st.session_state.analysis_results:
         res = st.session_state.analysis_results
         models = res["names"]
@@ -631,25 +627,24 @@ with main_col:
         total_transactions = res['totals']
         y_true = np.array(res['y_true']) if res["y_true"] is not None else None
         recalls, aucs = res["recalls"], res["aucs"]
-        colors = ['#FC8181', '#6a82fb', '#ffb800']
+        colors = ['#6a82fb', '#ffb800', '#FC8181', '#636e72']
 
         st.subheader("Overall Summary")
-        col1, col2, col3 = st.columns(3)
-        with col1: st.metric("Total Transactions", total_transactions)
+        cols = st.columns(len(models) + 1)
+        cols[0].metric("Total Transactions", total_transactions)
         for i, name in enumerate(models):
-            with [col2, col3][i]:
-                st.metric(f"{name} Fraud", int(np.sum(preds[name])))
+            cols[i+1].metric(f"{name} Fraud", int(np.sum(preds[name])))
 
-        fig1, axes1 = plt.subplots(1, 3, figsize=(12, 4))
+        fig1, axes1 = plt.subplots(1, 4, figsize=(20, 5))
         for i, name in enumerate(models):
             axes1[i].pie([np.sum(preds[name]), total_transactions - np.sum(preds[name])],
-                labels=['Fraudulent', 'Legitimate'], autopct='%1.1f%%', colors=[colors[i], '#74b9ff'],
+                labels=['Fraudulent', 'Legitimate'], autopct='%1.1f%%', colors=[colors[i], '#dfe6e9'],
                 startangle=90, textprops={'color':'#232946', 'fontweight':'bold'})
             axes1[i].set_title(name)
         st.subheader("Visualizations")
         st.pyplot(fig1)
 
-        fig2, ax2 = plt.subplots(figsize=(8, 4))
+        fig2, ax2 = plt.subplots(figsize=(10, 4))
         for name, color in zip(models, colors):
             ax2.hist(probs[name], bins=30, alpha=0.5, label=name, edgecolor='black', color=color)
         ax2.set_xlabel('Fraud Probability')
@@ -688,8 +683,8 @@ with main_col:
         st.subheader("Model Comparison")
         comp_data = {
             'Model': models,
-            'Fraudulent': [np.sum(preds[n]) for n in models],
-            'Legitimate': [total_transactions - np.sum(preds[n]) for n in models],
+            'Fraudulent': [int(np.sum(preds[n])) for n in models],
+            'Legitimate': [int(total_transactions - np.sum(preds[n])) for n in models],
             'Fraud %': [f"{(np.sum(preds[n])/total_transactions)*100:.2f}%" for n in models],
             'Avg Probability': [f"{res['avg_probs'][n]:.4f}" for n in models],
             'Recall': [f"{recalls[n]:.4f}" for n in models] if y_true is not None else [""]*len(models),
@@ -697,6 +692,7 @@ with main_col:
         }
         st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
 
+# ========= RIGHT: LIVE DASHBOARD =========
 with dashboard_col:
     st_autorefresh(interval=3000, key="fraud_dashboard")
     st.markdown("### 🎯 Live Fraud Transaction Dashboard")
@@ -728,12 +724,12 @@ with dashboard_col:
     n_review = sum(tx['status'] == "reviewing" for tx in st.session_state.demo_transactions)
 
     st.markdown("#### 📊 Stats")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1: st.metric("Total", n_total)
-    with col2: st.metric("Fraud", n_fraud)
-    with col3: st.metric("Blocked", n_blocked)
-    with col4: st.metric("Legitimate", n_legit)
-    with col5: st.metric("Review", n_review)
+    dash_cols = st.columns(5)
+    dash_cols[0].metric("Total", n_total)
+    dash_cols[1].metric("Fraud", n_fraud)
+    dash_cols[2].metric("Blocked", n_blocked)
+    dash_cols[3].metric("Legitimate", n_legit)
+    dash_cols[4].metric("Review", n_review)
     st.markdown("---")
     st.markdown("#### 🟢 Latest Transactions (refreshes every few seconds)")
     for tx in st.session_state.demo_transactions[:20]:
@@ -754,5 +750,6 @@ with dashboard_col:
         </div>
         """, unsafe_allow_html=True)
     st.caption("Dashboard demo is independent from model results and does not affect your uploaded analysis.")
+
 
 
