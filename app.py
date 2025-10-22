@@ -444,6 +444,7 @@ import time
 from datetime import datetime
 from sklearn.metrics import roc_curve, auc, recall_score
 
+# Model and scaler paths
 ALLOWED_EXTENSIONS = ['csv', 'pdf']
 DECISION_TREE_PATH = 'decision_tree_model.joblib'
 RANDOM_FOREST_PATH = 'random_Forest_model.pkl'
@@ -458,7 +459,7 @@ def load_models():
         dt_model = joblib.load(DECISION_TREE_PATH)
         rf_model = joblib.load(RANDOM_FOREST_PATH)
         xgb_model = joblib.load(XGBOOST_PATH)
-        lr_model = joblib.load(LOGISTIC_REGRESSION_PATH)      
+        lr_model = joblib.load(LOGISTIC_REGRESSION_PATH)
         try:
             scaler = joblib.load(SCALER_PATH)
         except:
@@ -509,12 +510,10 @@ def preprocess_data(df):
         df = df.dropna(subset=required_cols)
         if len(df) == 0:
             return None, None, "No valid data found after cleaning."
-        
         y_true = None
         if 'Class' in df.columns:
             df['Class'] = pd.to_numeric(df['Class'], errors='coerce')
             y_true = df['Class'].values
-        
         feature_cols = required_cols
         X = df[feature_cols].copy()
         X_scaled = scaler.transform(X)
@@ -535,7 +534,6 @@ def predict_fraud(X_scaled, model_choice):
         st.error(f"Prediction error: {e}")
         return None, None
 
-# Demo dashboard logic
 def generate_demo_transaction():
     transaction_id = f"TXN{np.random.randint(100000, 999999)}"
     amount = np.random.choice([
@@ -575,7 +573,6 @@ if 'demo_transactions' not in st.session_state:
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
 
-# --- Main App Layout ---
 st.set_page_config(page_title="Fraud Detection", layout="wide")
 st.title("🔒 Fraud Detection System")
 st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
@@ -587,10 +584,16 @@ with main_col:
     uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
     check = st.button("Check Transaction", use_container_width=True)
 
-    # Display previous results if they exist
     if st.session_state.analysis_results is not None and not check:
         results = st.session_state.analysis_results
-        # [Code for showing results here, unchanged]
+        st.subheader("Overall Summary")
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1: st.metric("Total Transactions", results['total_transactions'])
+        with col2: st.metric("Decision Tree Fraud", results['dt_fraud'])
+        with col3: st.metric("Random Forest Fraud", results['rf_fraud'])
+        with col4: st.metric("XGBoost Fraud", results['xgb_fraud'])
+        with col5: st.metric("Logistic Regression Fraud", results['lr_fraud'])
+        st.divider()
 
     if check and uploaded_file is not None:
         filename = uploaded_file.name
@@ -616,28 +619,98 @@ with main_col:
                         if pred_dt is None or pred_rf is None or pred_xgb is None or pred_lr is None:
                             st.error("Prediction failed.")
                         else:
-                            # [Code for saving analysis_results to session and visualizing results, unchanged]
+                            total_transactions = len(pred_dt)
+                            results = {
+                                'total_transactions': total_transactions,
+                                'dt_fraud': int(np.sum(pred_dt)),
+                                'rf_fraud': int(np.sum(pred_rf)),
+                                'xgb_fraud': int(np.sum(pred_xgb)),
+                                'lr_fraud': int(np.sum(pred_lr))
+                            }
+                            st.session_state.analysis_results = results
+                            st.success("Analysis complete. Results updated.")
 
 with demo_col:
     st.markdown("### 🎯 Live Demo Dashboard")
     st.markdown("*Future Implementation Preview*")
-    # Use st.experimental_rerun in only this part
     stats_placeholder = st.empty()
     feed_placeholder = st.empty()
 
-    # Live dashboard: only add transactions and update every N seconds
     current_time = time.time()
     if current_time - st.session_state.last_update > 3:
         new_txn = generate_demo_transaction()
         st.session_state.demo_transactions.insert(0, new_txn)
-        # Keep only last 50 transactions
         if len(st.session_state.demo_transactions) > 50:
             st.session_state.demo_transactions = st.session_state.demo_transactions[:50]
         st.session_state.last_update = current_time
         st.experimental_rerun()
 
-    # [Dashboard rendering code unchanged: show stats, feeds, styled boxes as before]
-    # Avoid placing more experimental_rerun calls elsewhere!
+    for txn in st.session_state.demo_transactions:
+        age = time.time() - txn['created_at']
+        if txn['status'] == 'pending' and age > 2:
+            if txn['fraud_prob'] > 0.7 or txn['is_fraud']:
+                txn['status'] = 'reviewing'
+            else:
+                txn['status'] = 'approved'
+        if txn['status'] == 'reviewing' and age > 5:
+            if txn['is_fraud']:
+                txn['status'] = 'blocked'
+            else:
+                txn['status'] = 'approved'
+
+    st.session_state.demo_stats['total'] = len(st.session_state.demo_transactions)
+    st.session_state.demo_stats['fraud_detected'] = sum(1 for t in st.session_state.demo_transactions if t['is_fraud'])
+    st.session_state.demo_stats['fraud_blocked'] = sum(1 for t in st.session_state.demo_transactions if t['is_fraud'] and t['status'] == 'blocked')
+    st.session_state.demo_stats['legitimate'] = sum(1 for t in st.session_state.demo_transactions if not t['is_fraud'])
+    st.session_state.demo_stats['under_review'] = sum(1 for t in st.session_state.demo_transactions if t['status'] == 'reviewing')
+
+    with stats_placeholder.container():
+        st.markdown("#### 📊 Real-time Statistics")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total", st.session_state.demo_stats['total'])
+            st.metric("🔴 Fraud", st.session_state.demo_stats['fraud_detected'])
+        with col2:
+            st.metric("✅ Legitimate", st.session_state.demo_stats['legitimate'])
+            st.metric("🛡️ Blocked", st.session_state.demo_stats['fraud_blocked'])
+        st.markdown("---")
+        st.markdown("#### 🔄 Live Transaction Feed")
+
+    with feed_placeholder.container():
+        for txn in st.session_state.demo_transactions[:20]:
+            age = time.time() - txn['created_at']
+            border_color = '#27ae60' if txn['status'] == 'approved' else (
+                '#e67e22' if txn['status'] == 'pending' else (
+                    '#f39c12' if txn['status'] == 'reviewing' else '#e74c3c'))
+            bg_color = '#d5f4e6' if txn['status'] == 'approved' else (
+                '#fef5e7' if txn['status'] in ['pending', 'reviewing'] else '#fadbd8')
+            status_map = {
+                'pending': ('⏳', 'PENDING'),
+                'approved': ('✅', 'APPROVED'),
+                'reviewing': ('⚠️', 'REVIEWING'),
+                'blocked': ('🚫', 'BLOCKED')
+            }
+            status_emoji, status_text = status_map.get(txn['status'], ('❓', txn['status'].upper()))
+            st.markdown(f"""
+            <div style="border-left: 4px solid {border_color}; background-color: {bg_color}; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="font-size: 14px;">{txn['merchant']}</strong><br>
+                        <span style="font-size: 12px; color: #555;">{txn['card']} • ${txn['amount']:.2f}</span><br>
+                        <span style="font-size: 11px; color: #888;">{int(age)}s ago</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 18px;">{status_emoji}</span><br>
+                        <strong style="font-size: 11px; color: {border_color};">{status_text}</strong><br>
+                        <span style="font-size: 10px; color: #666;">Risk: {txn['fraud_prob']:.0%}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("*🔄 Auto-refreshes every 3 seconds*")
+        st.markdown("*🤖 Simulated AI fraud detection in action*")
+
 
 
 
