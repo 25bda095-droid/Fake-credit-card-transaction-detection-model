@@ -579,6 +579,7 @@ st.markdown("### CREDIT CARD TRANSACTION ANALYSIS")
 
 main_col, demo_col = st.columns([2, 1])
 
+# MAIN ANALYSIS COLUMN
 with main_col:
     st.info("How to Use:\n- Upload your credit card transaction data (CSV or PDF)\n- File must have columns: Time, V1-V28, Amount\n- Optional: Include 'Class' column (0=Legitimate, 1=Fraud) for ROC AUC and Recall metrics\n- Click Check Transaction to analyze with all 4 models\n- Get instant fraud detection results with model comparison!")
     uploaded_file = st.file_uploader("Choose your file (CSV or PDF)", type=ALLOWED_EXTENSIONS)
@@ -629,7 +630,10 @@ with main_col:
                             }
                             st.session_state.analysis_results = results
                             st.success("Analysis complete. Results updated.")
+            except Exception as e:
+                st.error(f"Processing error: {str(e)}")
 
+# LIVE DEMO DASHBOARD COLUMN
 with demo_col:
     st.markdown("### 🎯 Live Demo Dashboard")
     st.markdown("*Future Implementation Preview*")
@@ -710,6 +714,7 @@ with demo_col:
         st.markdown("---")
         st.markdown("*🔄 Auto-refreshes every 3 seconds*")
         st.markdown("*🤖 Simulated AI fraud detection in action*")
+
 
 
 
